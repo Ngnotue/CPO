@@ -1,2 +1,4 @@
 cpo_backend/node_modules/
 cpo_backend/.env
+node_modules/
+.env
