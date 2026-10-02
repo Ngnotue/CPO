@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: cpo-site
+    env: node
+    plan: free
+    rootDir: .
+    buildCommand: cd cpo_backend && npm install
+    startCommand: cd cpo_backend && npm start
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: CONTACT_RECIPIENT
+        value: nnoguem@gmail.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 465
+      - key: SMTP_SECURE
+        value: true
+      - key: SMTP_TLS_REJECT_UNAUTHORIZED
+        value: true

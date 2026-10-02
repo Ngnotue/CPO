@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Le Collège Privé de l'Ouest accompagne chaque élève dans un parcours exigeant, attentif et ouvert sur le monde." />
+    <title>CPO | Collège Privé de l'Ouest</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#accueil" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a>
+      <nav class="main-nav" aria-label="Navigation principale"><a href="#college" data-i18n="nav.college">Le collège</a><a href="#parcours" data-i18n="nav.parcours">Le parcours</a><a href="#espace" data-i18n="nav.space">Espace familles</a><a href="#admissions" data-i18n="nav.admissions">Admissions</a><a href="#contact" data-i18n="nav.contact">Contact</a></nav>
+      <div class="header-actions"><button class="language-toggle" type="button" data-language-toggle aria-label="Changer de langue"><span data-language-label>EN</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Activer le thème sombre"><svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg><svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.4A8.5 8.5 0 0 1 8.6 3.3 8.5 8.5 0 1 0 20.7 15.4Z"/></svg><span class="sr-only" data-theme-label>Thème sombre</span></button><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span></button></div>
+    </header>
+    <main>
+      <section class="hero hero-premium" id="accueil">
+        <div class="hero-image" aria-hidden="true"></div>
+        <div class="hero-content reveal">
+          <p class="eyebrow" data-i18n="hero.eyebrow">Collège Privé de l'Ouest</p>
+          <p class="school-type" data-i18n="hero.type">Collège d'enseignement général et technique</p>
+          <h1 data-i18n="hero.title">Apprendre avec exigence.<br /><em>Grandir avec confiance.</em></h1>
+          <p class="hero-intro" data-i18n="hero.intro">Un environnement attentif où chaque élève construit ses savoirs, sa voix et son avenir.</p>
+          <p class="uniform-note" data-i18n="hero.uniform">Tenue scolaire : haut bleu ciel et bas bleu marine.</p>
+          <div class="hero-actions">
+            <a class="button button-light" href="#contact"><span data-i18n="hero.cta">Échanger avec nous</span><span aria-hidden="true">↗</span></a>
+            <a class="button button-ghost" href="#admissions"><span data-i18n="hero.secondary">Découvrir l'admission</span></a>
+          </div>
+        </div>
+        <div class="hero-panel reveal">
+          <p>Une école qui sait accompagner les ambitions.</p>
+          <div class="hero-panel-grid">
+            <div><strong>General</strong><span>et technique</span></div>
+            <div><strong>Accompagnement</strong><span>à chaque étape</span></div>
+            <div><strong>Cadre</strong><span>apaisé et exigeant</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="intro-section section-pad" id="college">
+        <div class="section-heading reveal">
+          <p class="eyebrow" data-i18n="college.eyebrow">Notre approche</p>
+          <h2 data-i18n="college.title">Ici, la curiosité<br /><em>prend sa place.</em></h2>
+        </div>
+        <div class="intro-copy reveal">
+          <p data-i18n="college.copy">Le CPO est un collège d'enseignement général et technique où l'exigence académique s'accorde avec l'écoute. Les élèves sont accompagnés avec attention, encouragés à poser des questions et invités à regarder plus loin que le programme.</p>
+          <a class="text-link" href="#parcours"><span data-i18n="college.link">Découvrir notre pédagogie</span><span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="pillars-section section-pad" id="parcours">
+        <div class="section-heading section-heading-wide reveal">
+          <p class="eyebrow" data-i18n="pillars.eyebrow">Ce qui nous guide</p>
+          <h2 data-i18n="pillars.title">Une présence qui<br /><em>fait grandir.</em></h2>
+        </div>
+        <div class="pillar-grid">
+          <article class="pillar reveal"><span class="pillar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 4v24M4 16h24M7.5 7.5l17 17M24.5 7.5l-17 17"/></svg></span><h3 data-i18n="pillars.one.title">Exigence sereine</h3><p data-i18n="pillars.one.copy">Des repères clairs et des enseignements solides pour apprendre avec confiance, sans jamais perdre le plaisir de comprendre.</p></article>
+          <article class="pillar reveal"><span class="pillar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7 16c0-5 4-9 9-9s9 4 9 9-4 9-9 9-9-4-9-9Z"/><path d="M16 11v5l3 2"/></svg></span><h3 data-i18n="pillars.two.title">Attention réelle</h3><p data-i18n="pillars.two.copy">Une équipe disponible qui observe, écoute et ajuste son accompagnement pour respecter le rythme de chacun.</p></article>
+          <article class="pillar reveal"><span class="pillar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 25 27 7M9 7h18v18"/></svg></span><h3 data-i18n="pillars.three.title">Esprit ouvert</h3><p data-i18n="pillars.three.copy">Des projets et des rencontres pour relier les apprentissages au monde, aux autres et aux questions qui restent à inventer.</p></article>
+        </div>
+      </section>
+
+      <section class="space-section section-pad" id="espace">
+        <div class="section-heading reveal">
+          <p class="eyebrow" data-i18n="space.eyebrow">Un lien simple avec le collège</p>
+          <h2 data-i18n="space.title">L'espace<br /><em>des familles.</em></h2>
+        </div>
+        <div class="space-grid">
+          <article class="space-card space-card-primary reveal"><span class="space-card-label" data-i18n="space.student.label">Élèves</span><h3 data-i18n="space.student.title">Retrouver son parcours</h3><p data-i18n="space.student.copy">Accédez aux informations utiles, aux projets de classe et aux ressources qui accompagnent chaque journée.</p><a class="button button-dark" href="#contact"><span data-i18n="space.student.cta">Accéder à l'espace élève</span><span aria-hidden="true">↗</span></a></article>
+          <article class="space-card reveal"><span class="space-card-label" data-i18n="space.parent.label">Parents</span><h3 data-i18n="space.parent.title">Rester en lien</h3><p data-i18n="space.parent.copy">Un point de contact clair pour suivre les échanges avec l'équipe et préparer les prochaines étapes.</p><a class="text-link" href="#contact"><span data-i18n="space.parent.cta">Contacter l'équipe</span><span aria-hidden="true">→</span></a></article>
+        </div>
+      </section>
+
+      <section class="admissions-section section-pad" id="admissions">
+        <div class="admissions-panel reveal">
+          <div class="admissions-title"><p class="eyebrow" data-i18n="admissions.eyebrow">Nous rencontrer</p><h2 data-i18n="admissions.title">Votre histoire<br /><em>commence ici.</em></h2></div>
+          <div class="admissions-steps">
+            <div class="admission-step"><span class="step-line"></span><h3 data-i18n="admissions.step.one.title">Découvrir</h3><p data-i18n="admissions.step.one.copy">Parcourez notre approche et imaginez votre place au collège.</p></div>
+            <div class="admission-step"><span class="step-line"></span><h3 data-i18n="admissions.step.two.title">Échanger</h3><p data-i18n="admissions.step.two.copy">Une rencontre permet de répondre simplement à vos questions.</p></div>
+            <div class="admission-step"><span class="step-line"></span><h3 data-i18n="admissions.step.three.title">Rejoindre</h3><p data-i18n="admissions.step.three.copy">Nous construisons ensemble la suite du parcours de votre enfant.</p></div>
+          </div>
+          <a class="button button-dark" href="#contact"><span data-i18n="admissions.cta">Prendre contact</span><span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="application-section section-pad">
+        <div class="application-shell reveal">
+          <div class="application-heading"><p class="eyebrow" data-i18n="application.eyebrow">Gestion des admissions</p><h2 data-i18n="application.title">Avancer, étape<br /><em>par étape.</em></h2><p data-i18n="application.copy">Déposez une demande, échangez avec notre équipe et retrouvez les prochaines actions au même endroit.</p></div>
+          <div class="application-actions"><a class="application-action" href="#contact"><span class="action-index">A</span><span><strong data-i18n="application.request">Déposer une demande</strong><small data-i18n="application.request.copy">Commencer votre démarche d'admission.</small></span><span aria-hidden="true">↗</span></a><a class="application-action" href="#contact"><span class="action-index">B</span><span><strong data-i18n="application.follow">Suivre un dossier</strong><small data-i18n="application.follow.copy">Poser une question à l'équipe admissions.</small></span><span aria-hidden="true">↗</span></a></div>
+        </div>
+      </section>
+
+      <section class="contact-section section-pad" id="contact">
+        <div class="contact-heading reveal"><p class="eyebrow" data-i18n="contact.eyebrow">Une question, une envie</p><h2 data-i18n="contact.title">Parlons de<br /><em>la suite.</em></h2><p class="contact-recipient"><span data-i18n="contact.recipient">Les messages sont envoyés à</span> <a href="mailto:nnoguem@gmail.com">nnoguem@gmail.com</a></p></div>
+        <form class="contact-form reveal" data-contact-form><label><span data-i18n="contact.name">Nom complet</span><input type="text" name="name" autocomplete="name" required /></label><label><span data-i18n="contact.email">Adresse e-mail</span><input type="email" name="email" autocomplete="email" required /></label><label><span data-i18n="contact.message">Votre message</span><textarea name="message" rows="3" required></textarea></label><button class="button button-dark" type="submit"><span data-i18n="contact.send">Envoyer le message</span><span aria-hidden="true">↗</span></button><p class="form-feedback" role="status" data-form-feedback></p></form>
+      </section>
+    </main>
+    <footer class="site-footer"><a class="brand" href="#accueil" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a><p data-i18n="footer.copy">Un cadre pour apprendre, une communauté pour avancer.</p><a class="footer-mail" href="mailto:nnoguem@gmail.com">nnoguem@gmail.com <span aria-hidden="true">↗</span></a></footer>
+    <script src="script.js"></script>
+  </body>
+</html>
