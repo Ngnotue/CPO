@@ -336,7 +336,7 @@ export async function handleSupabaseRoute(request, response, url) {
       const kinds = requestedKinds.filter((kind) => allowedKinds.includes(kind));
       if (!kinds.length) return sendJson(response, 200, { configured: true, items: [] }), true;
       const limit = Math.max(1, Math.min(Number(searchParams.get("limit")) || 6, 12));
-      const now = encodeURIComponent(new Date().toISOString());
+      const now = new Date().toISOString();
       const locale = searchParams.get("locale") === "en" ? "en" : "fr";
       const query = new URLSearchParams({
         select: "id,kind,title,slug,summary,category,locale,is_important,published_at,expires_at,publication_files(id,original_name,content_type,object_path,bucket_id)",

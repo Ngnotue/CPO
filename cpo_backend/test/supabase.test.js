@@ -41,6 +41,32 @@ test("public publication feed returns an explicit empty configured state when Su
   }
 });
 
+test("public publication feed sends ISO timestamps without double encoding", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    requestUrl = new URL(input);
+    return new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const { handled, response } = await call("/api/publications?locale=fr");
+    assert.equal(handled, true);
+    assert.equal(response.status, 200);
+    assert.equal(response.json().configured, true);
+    const expiryFilter = requestUrl.searchParams.get("or");
+    assert.match(expiryFilter, /expires_at\.gt\.\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
+    assert.match(requestUrl.searchParams.get("published_at"), /^lte\.\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
 test("staff session is not authenticated when database settings are absent", async () => {
   const oldUrl = process.env.SUPABASE_URL;
   const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
