@@ -14,7 +14,7 @@
   <body>
     <header class="site-header">
       <a class="brand" href="#accueil" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a>
-      <nav class="main-nav" aria-label="Navigation principale"><a href="#college" data-i18n="nav.college">Le collège</a><a href="#parcours" data-i18n="nav.parcours">Le parcours</a><a href="#espace" data-i18n="nav.space">Espace familles</a><a href="#admissions" data-i18n="nav.admissions">Admissions</a><a href="#contact" data-i18n="nav.contact">Contact</a></nav>
+      <nav class="main-nav" aria-label="Navigation principale"><a href="about.html" data-i18n="nav.college">Le collège</a><a href="#actualites" data-i18n="nav.news">Actualités</a><a href="#organisation" data-i18n="nav.organization">Organisation</a><a href="#espace" data-i18n="nav.space">Espace familles</a><a href="#admissions" data-i18n="nav.admissions">Admissions</a><a href="#contact" data-i18n="nav.contact">Contact</a></nav>
       <div class="header-actions"><button class="language-toggle" type="button" data-language-toggle aria-label="Changer de langue"><span data-language-label>EN</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Activer le thème sombre"><svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg><svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.4A8.5 8.5 0 0 1 8.6 3.3 8.5 8.5 0 1 0 20.7 15.4Z"/></svg><span class="sr-only" data-theme-label>Thème sombre</span></button><button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span></button></div>
     </header>
     <main>
@@ -41,6 +41,26 @@
         </div>
       </section>
 
+      <section class="news-section section-pad" id="actualites" aria-labelledby="news-title">
+        <div class="news-heading reveal">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="news.eyebrow">Informations du CPO</p>
+            <h2 id="news-title" data-i18n="news.title">Les nouvelles<br /><em>de la communauté.</em></h2>
+          </div>
+          <p class="news-intro" data-i18n="news.intro">Les annonces, actualités et informations pratiques seront regroupées ici dès que leurs contenus auront été fournis par le collège.</p>
+        </div>
+        <div class="news-empty reveal" role="status" data-news-empty>
+          <span class="news-empty-mark" aria-hidden="true">CPO</span>
+          <div class="news-empty-copy">
+            <p class="eyebrow" data-i18n="news.empty.eyebrow">Espace de publication</p>
+            <h3 data-i18n="news.empty.title">Les actualités seront bientôt disponibles.</h3>
+            <p data-i18n="news.empty.copy">Aucune annonce n'est publiée pour le moment. Pour une information immédiate, contactez directement l'équipe du CPO.</p>
+          </div>
+          <a class="text-link" href="#contact"><span data-i18n="news.empty.cta">Contacter le collège</span><span aria-hidden="true">→</span></a>
+        </div>
+        <div class="news-feed" data-news-feed aria-live="polite"></div>
+      </section>
+
       <section class="intro-section section-pad" id="college">
         <div class="section-heading reveal">
           <p class="eyebrow" data-i18n="college.eyebrow">Notre approche</p>
@@ -64,14 +84,50 @@
         </div>
       </section>
 
+      <section class="organization-section section-pad" id="organisation" aria-labelledby="organization-title">
+        <div class="organization-intro reveal">
+          <p class="eyebrow" data-i18n="organization.eyebrow">L'organisation du CPO</p>
+          <h2 id="organization-title" data-i18n="organization.title">Deux parcours.<br /><em>Un même objectif.</em></h2>
+          <p data-i18n="organization.intro">Le collège propose un enseignement général et technique. L'équipe pourra vous renseigner sur les classes, options et modalités actuellement disponibles.</p>
+        </div>
+        <div class="organization-list">
+          <article class="organization-row reveal">
+            <span class="organization-index" aria-hidden="true">01</span>
+            <div><h3 data-i18n="organization.general.title">Enseignement général</h3><p data-i18n="organization.general.copy">Un parcours d'enseignement secondaire général. Contactez le collège pour connaître les niveaux et matières proposés cette année.</p></div>
+            <span class="organization-arrow" aria-hidden="true">↗</span>
+          </article>
+          <article class="organization-row reveal">
+            <span class="organization-index" aria-hidden="true">02</span>
+            <div><h3 data-i18n="organization.technical.title">Enseignement technique</h3><p data-i18n="organization.technical.copy">Un parcours technique proposé par le CPO. Les filières et conditions d'admission sont à confirmer auprès de l'établissement.</p></div>
+            <span class="organization-arrow" aria-hidden="true">↗</span>
+          </article>
+          <a class="organization-contact" href="admissions.html"><span data-i18n="organization.cta">Poser une question sur les parcours</span><span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
       <section class="space-section section-pad" id="espace">
         <div class="section-heading reveal">
           <p class="eyebrow" data-i18n="space.eyebrow">Un lien simple avec le collège</p>
           <h2 data-i18n="space.title">L'espace<br /><em>des familles.</em></h2>
         </div>
         <div class="space-grid">
-          <article class="space-card space-card-primary reveal"><span class="space-card-label" data-i18n="space.student.label">Élèves</span><h3 data-i18n="space.student.title">Retrouver son parcours</h3><p data-i18n="space.student.copy">Accédez aux informations utiles, aux projets de classe et aux ressources qui accompagnent chaque journée.</p><a class="button button-dark" href="#contact"><span data-i18n="space.student.cta">Accéder à l'espace élève</span><span aria-hidden="true">↗</span></a></article>
+          <article class="space-card space-card-primary reveal"><span class="space-card-label" data-i18n="space.student.label">Élèves</span><h3 data-i18n="space.student.title">Retrouver son parcours</h3><p data-i18n="space.student.copy">Accédez aux informations utiles, aux projets de classe et aux ressources qui accompagnent chaque journée.</p><a class="button button-dark" href="#contact"><span data-i18n="space.student.cta">Demander les informations utiles</span><span aria-hidden="true">↗</span></a></article>
           <article class="space-card reveal"><span class="space-card-label" data-i18n="space.parent.label">Parents</span><h3 data-i18n="space.parent.title">Rester en lien</h3><p data-i18n="space.parent.copy">Un point de contact clair pour suivre les échanges avec l'équipe et préparer les prochaines étapes.</p><a class="text-link" href="#contact"><span data-i18n="space.parent.cta">Contacter l'équipe</span><span aria-hidden="true">→</span></a></article>
+        </div>
+      </section>
+
+      <section class="gallery-section section-pad" id="galerie" aria-labelledby="gallery-title">
+        <div class="gallery-heading reveal">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="gallery.eyebrow">La vie du collège</p>
+            <h2 id="gallery-title" data-i18n="gallery.title">Le CPO<br /><em>en images.</em></h2>
+          </div>
+          <p data-i18n="gallery.intro">Cette galerie accueillera les photographies de l'établissement et de ses activités. Les visuels seront ajoutés à partir des fichiers fournis par le CPO.</p>
+        </div>
+        <div class="gallery-grid" aria-label="Emplacements réservés aux photos du CPO">
+          <figure class="gallery-slot gallery-slot-large"><span data-i18n="gallery.slot.one">Photo de l'établissement à fournir</span></figure>
+          <figure class="gallery-slot"><span data-i18n="gallery.slot.two">Photo de la vie scolaire à fournir</span></figure>
+          <figure class="gallery-slot"><span data-i18n="gallery.slot.three">Photo d'activité à fournir</span></figure>
         </div>
       </section>
 
@@ -99,7 +155,7 @@
         <form class="contact-form reveal" data-contact-form><label><span data-i18n="contact.name">Nom complet</span><input type="text" name="name" autocomplete="name" required /></label><label><span data-i18n="contact.email">Adresse e-mail</span><input type="email" name="email" autocomplete="email" required /></label><label><span data-i18n="contact.message">Votre message</span><textarea name="message" rows="3" required></textarea></label><button class="button button-dark" type="submit"><span data-i18n="contact.send">Envoyer le message</span><span aria-hidden="true">↗</span></button><p class="form-feedback" role="status" data-form-feedback></p></form>
       </section>
     </main>
-    <footer class="site-footer"><a class="brand" href="#accueil" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a><p data-i18n="footer.copy">Un cadre pour apprendre, une communauté pour avancer.</p><a class="footer-mail" href="mailto:nnoguem@gmail.com">nnoguem@gmail.com <span aria-hidden="true">↗</span></a></footer>
+    <footer class="site-footer"><a class="brand" href="#accueil" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a><p data-i18n="footer.copy">Un cadre pour apprendre, une communauté pour avancer.</p><a class="footer-mail" href="mailto:nnoguem@gmail.com">nnoguem@gmail.com <span aria-hidden="true">↗</span></a><a class="footer-staff-link" href="staff.html">Espace du personnel</a></footer>
     <script src="script.js"></script>
   </body>
 </html>

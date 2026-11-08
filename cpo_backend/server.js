@@ -1,9 +1,10 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import { handleSupabaseRoute, isSupabaseConfigured } from "./supabase.js";
 
 dotenv.config();
 
@@ -67,8 +68,8 @@ async function handleContact(request, response) {
 
 async function serveStatic(request, response) {
   const requestedPath = request.url === "/" ? "/index.html" : request.url.split("?")[0];
-  const filePath = normalize(join(rootDirectory, requestedPath));
-  if (!filePath.startsWith(rootDirectory)) return sendJson(response, 403, { error: "Acces refuse." });
+  const filePath = resolve(rootDirectory, `.${requestedPath}`);
+  if (filePath !== rootDirectory && !filePath.startsWith(`${rootDirectory}${sep}`)) return sendJson(response, 403, { error: "Acces refuse." });
   try {
     const content = await readFile(filePath);
     const contentTypes = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml" };
@@ -85,10 +86,13 @@ const server = http.createServer(async (request, response) => {
       status: "ok",
       service: "cpo-contact-server",
       appUrl,
+      supabaseConfigured: isSupabaseConfigured(),
       timestamp: new Date().toISOString()
     });
   }
   if (request.method === "POST" && request.url === "/api/contact") return handleContact(request, response);
+  const requestUrl = new URL(request.url, appUrl);
+  if (await handleSupabaseRoute(request, response, requestUrl)) return;
   if (request.method === "GET") return serveStatic(request, response);
   sendJson(response, 405, { error: "Methode non autorisee." });
 });

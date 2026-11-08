@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Espace sécurisé du personnel du Collège Privé de l'Ouest." />
+    <title>Espace du personnel | CPO</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header site-header--inner staff-header">
+      <a class="brand" href="index.html" aria-label="Retour au site CPO"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a>
+      <a class="staff-back" href="index.html">Retour au site public <span aria-hidden="true">↗</span></a>
+    </header>
+    <main class="staff-main">
+      <section class="staff-intro">
+        <p class="eyebrow">Portail interne</p>
+        <h1>Publier, suivre<br /><em>et accompagner.</em></h1>
+        <p>Un espace réservé aux comptes du personnel CPO. Les élèves et visiteurs n'ont pas besoin de compte pour lire les publications publiques.</p>
+      </section>
+
+      <section class="staff-auth text-block" data-login-panel aria-labelledby="staff-login-title">
+        <p class="eyebrow">Accès sécurisé</p>
+        <h2 id="staff-login-title">Connexion du personnel</h2>
+        <form class="staff-form" data-login-form>
+          <label><span>Identifiant professeur ou adresse e-mail</span><input type="text" name="identifier" autocomplete="username" required /></label>
+          <label><span>Mot de passe</span><input type="password" name="password" autocomplete="current-password" required /></label>
+          <button class="button button-dark" type="submit"><span>Se connecter</span><span aria-hidden="true">↗</span></button>
+          <p class="form-feedback" role="status" data-login-feedback></p>
+        </form>
+      </section>
+
+      <section class="staff-workspace" data-staff-workspace hidden>
+        <div class="staff-welcome">
+          <div><p class="eyebrow" data-staff-role>Personnel CPO</p><h2>Bonjour, <span data-staff-name></span></h2></div>
+          <button class="staff-logout" type="button" data-logout>Déconnexion</button>
+        </div>
+        <p class="staff-notice" data-staff-notice role="status"></p>
+
+        <section class="text-block staff-password" data-password-panel hidden>
+          <p class="eyebrow">Première connexion</p>
+          <h2>Choisissez un mot de passe personnel</h2>
+          <p>Votre mot de passe temporaire est à usage unique. Choisissez-en un nouveau d'au moins 12 caractères avant d'accéder au portail.</p>
+          <form class="staff-form" data-password-form>
+            <label><span>Nouveau mot de passe</span><input type="password" name="password" minlength="12" autocomplete="new-password" required /></label>
+            <label><span>Confirmer le mot de passe</span><input type="password" name="confirmation" minlength="12" autocomplete="new-password" required /></label>
+            <button class="button button-dark" type="submit"><span>Mettre à jour</span><span aria-hidden="true">↗</span></button>
+            <p class="form-feedback" role="status" data-password-feedback></p>
+          </form>
+        </section>
+
+        <div class="staff-dashboard" data-dashboard hidden>
+          <section class="staff-module text-block" aria-labelledby="publication-editor-title">
+            <div class="staff-module-heading"><div><p class="eyebrow">Contenus du collège</p><h2 id="publication-editor-title" data-editor-heading>Nouvelle publication</h2></div><button class="staff-secondary" type="button" data-reset-editor>Nouvelle</button></div>
+            <form class="staff-form staff-publication-form" data-publication-form>
+              <input type="hidden" name="id" />
+              <div class="staff-field-grid">
+                <label><span>Titre</span><input type="text" name="title" maxlength="220" required /></label>
+                <label><span>Rubrique</span><select name="kind"><option value="news">Actualité</option><option value="announcement">Annonce</option><option value="event">Événement</option><option value="course">Cours</option><option value="exercise">Exercice</option><option value="resource">Ressource</option></select></label>
+                <label><span>Langue</span><select name="locale"><option value="fr">Français</option><option value="en">English</option></select></label>
+                <label><span>Catégorie (facultative)</span><input type="text" name="category" maxlength="100" /></label>
+              </div>
+              <label><span>Résumé</span><textarea name="summary" rows="2" maxlength="600"></textarea></label>
+              <label><span>Texte</span><textarea name="body" rows="7" maxlength="50000"></textarea></label>
+              <label><span>Pièces jointes (PDF, Word, Excel, JPEG ou PNG · 100 Mo maximum par fichier)</span><input type="file" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" data-publication-files /></label>
+              <div class="staff-attachments" data-attachment-list aria-live="polite"></div>
+              <div class="staff-field-grid staff-publication-options">
+                <label><span>Publication</span><select name="status"><option value="draft">Brouillon</option><option value="published">Publier</option></select></label>
+                <label><span>Accès</span><select name="visibility"><option value="public">Public</option><option value="private">Personnel seulement</option></select></label>
+                <label class="staff-check"><input type="checkbox" name="is_important" /><span>Mettre en avant</span></label>
+              </div>
+              <p class="staff-help">La date de publication est attribuée automatiquement par la base de données. Les fichiers associés seront activés après configuration du stockage Supabase.</p>
+              <button class="button button-dark" type="submit"><span>Enregistrer</span><span aria-hidden="true">↗</span></button>
+              <p class="form-feedback" role="status" data-publication-feedback></p>
+            </form>
+          </section>
+
+          <section class="staff-module text-block" aria-labelledby="publication-list-title">
+            <p class="eyebrow">Brouillons et publications</p><h2 id="publication-list-title">Mes contenus</h2>
+            <div class="staff-list" data-publication-list><p>Chargement…</p></div>
+          </section>
+
+          <section class="staff-module text-block" data-admin-panel hidden aria-labelledby="teacher-admin-title">
+            <p class="eyebrow">Comptes</p><h2 id="teacher-admin-title">Créer un accès professeur</h2>
+            <p>Le mot de passe temporaire doit être transmis au professeur par un canal sûr. Il sera remplacé lors de sa première connexion.</p>
+            <form class="staff-form" data-teacher-form>
+              <div class="staff-field-grid">
+                <label><span>Nom complet</span><input type="text" name="full_name" maxlength="160" required /></label>
+                <label><span>Adresse e-mail</span><input type="email" name="email" maxlength="254" required /></label>
+                <label><span>Identifiant professeur</span><input type="text" name="teacher_code" maxlength="40" required /></label>
+                <label><span>Matière</span><input type="text" name="subject" maxlength="100" /></label>
+              </div>
+              <label><span>Mot de passe temporaire (12 caractères minimum)</span><input type="password" name="temporary_password" minlength="12" autocomplete="new-password" required /></label>
+              <button class="button button-dark" type="submit"><span>Créer le compte</span><span aria-hidden="true">↗</span></button>
+              <p class="form-feedback" role="status" data-teacher-feedback></p>
+            </form>
+            <div class="staff-list" data-teacher-list></div>
+          </section>
+
+          <section class="staff-module text-block" data-admin-panel hidden aria-labelledby="results-title">
+            <p class="eyebrow">Données sensibles · accès administrateur</p><h2 id="results-title">Enregistrer un résultat privé</h2>
+            <p>Les résultats nominatifs ne sont jamais publiés sur le site public. Cet espace reste réservé aux administrateurs.</p>
+            <form class="staff-form" data-result-form>
+              <div class="staff-field-grid">
+                <label><span>Examen</span><input type="text" name="exam_name" maxlength="180" required /></label>
+                <label><span>Nom de l'élève</span><input type="text" name="student_name" maxlength="180" required /></label>
+                <label><span>Identifiant de l'élève (facultatif)</span><input type="text" name="student_identifier" maxlength="100" /></label>
+                <label><span>Résultat</span><input type="text" name="result_value" maxlength="120" required /></label>
+              </div>
+              <button class="button button-dark" type="submit"><span>Enregistrer en privé</span><span aria-hidden="true">↗</span></button>
+              <p class="form-feedback" role="status" data-result-feedback></p>
+            </form>
+            <div class="staff-list" data-result-list></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script src="staff.js" defer></script>
+  </body>
+</html>

@@ -90,6 +90,118 @@ Un `Dockerfile` peut être ajouté pour un déploiement dans un environnement pl
 - Utiliser des variables d’environnement sur l’hébergeur.
 - Vérifier la délivrabilité du compte mail utilisé.
 - Tester le formulaire après publication sur la vraie URL de production.
+
+## Base de données et portail Supabase
+
+Le dépôt contient le début d'un portail du personnel basé sur Supabase
+(PostgreSQL, Auth et Storage). La migration est
+`supabase/migrations/20261108140000_cpo_portal.sql`; le test de permissions RLS
+est `supabase/tests/portal_rls_test.sql`. Le modèle comprend les profils admin
+/ professeur, classes, matières, actualités et publications, pièces jointes,
+résultats nominatifs et journal d'audit.
+
+### Sécurité retenue
+
+- Les pages publiques ne demandent pas de compte. Elles ne lisent que les
+  publications publiées, publiques, non expirées et dans la langue choisie.
+- Les comptes du personnel sont créés par l'administrateur, pas par inscription
+  publique. Un mot de passe temporaire doit être changé à la première connexion.
+- Les professeurs ne gèrent que leurs propres publications. Les opérations sont
+  contrôlées côté serveur et par les policies Postgres RLS.
+- Les résultats contenant le nom d'un élève sont stockés séparément et réservés
+  aux administrateurs. Ils ne sont jamais renvoyés au flux public.
+- Les pièces jointes sont envoyées vers un bucket privé avec des URL signées;
+  les clés Supabase privilégiées restent uniquement sur le backend.
+
+### Préparer Supabase
+
+1. Créer un projet Supabase et désactiver les inscriptions ouvertes dans Auth.
+2. Lier le projet depuis ce dépôt avec la Supabase CLI, puis appliquer la
+   migration (`supabase link --project-ref <référence>`, puis
+   `supabase db push`). Le fichier de test RLS se lance avec `supabase test db`.
+3. Créer le premier compte admin via Supabase Auth. Copier son UUID et l'associer
+   au rôle admin depuis l'éditeur SQL Supabase :
+
+   ```sql
+   insert into public.profiles (id, role, full_name, is_active, must_change_password)
+   values ('UUID_DE_L_ADMIN', 'admin', 'Nom de l’administrateur', true, false)
+   on conflict (id) do update
+     set role = 'admin', is_active = true, must_change_password = false;
+   ```
+
+4. Configurer `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` et
+   `SUPABASE_SECRET_KEY` dans les variables d'environnement du backend
+   (`cpo_backend/.env` en local, Render en production). La clé secrète/service
+   role ne doit jamais être ajoutée au frontend ou commitée.
+5. Redéployer le backend, vérifier `/api/health` (`supabaseConfigured: true`),
+   puis tester le flux public, les comptes professeur/admin et l'accès refusé
+   aux résultats nominatifs pour les rôles non-admin.
+
+Le projet Supabase et ses clés réelles ne sont pas inclus dans le dépôt. La
+migration doit être appliquée à un projet créé et vérifiée avant de saisir des
+données réelles. Prévoir des sauvegardes et tester régulièrement leur
+restauration.
+
+## Supabase : base de données et espace du personnel
+
+Le socle Supabase du portail est fourni dans `supabase/migrations/`. Il utilise
+PostgreSQL, Supabase Auth et Storage. La migration crée les profils avec rôles
+`admin` / `teacher`, les actualités et publications, leurs métadonnées de
+fichiers, les classes/matières et une table séparée pour les résultats
+nominatifs.
+
+### Ce qui est déjà prévu dans le code
+
+- `GET /api/publications` renvoie uniquement les actualités publiques publiées,
+  non expirées, dans la langue demandée (`fr` ou `en`).
+- `/staff.html` fournit une connexion, le changement obligatoire du mot de
+  passe temporaire, la gestion des publications et, pour l'administrateur, la
+  création/suspension de comptes professeurs et l'enregistrement privé de
+  résultats.
+- Le navigateur ne reçoit jamais la clé Supabase secrète. Les actions passent
+  par le backend Node et les accès SQL sont protégés par Row Level Security
+  (RLS).
+- Les fichiers utilisent des URL d'envoi signées à durée limitée et le bucket
+  privé `cpo-private-documents`. Le flux public ne reçoit des URL de lecture
+  temporaires que pour des pièces jointes de publications publiques.
+- Les résultats contenant le nom d'un élève ne sont pas publics; les policies
+  RLS les réservent au rôle administrateur.
+
+### Mise en service
+
+1. Créer un projet Supabase et garder désactivée l'inscription publique dans
+   Supabase Auth. Les comptes du personnel doivent être créés par
+   l'administrateur.
+2. Depuis le répertoire du projet, appliquer
+   `supabase/migrations/20261108140000_cpo_portal.sql` avec la Supabase CLI
+   (`supabase db push`) ou l'éditeur SQL Supabase. Vérifier la migration et ses
+   policies dans le projet de préproduction avant la production.
+3. Créer le premier utilisateur administrateur dans Supabase Auth. Copier son
+   UUID puis l'associer à son profil via l'éditeur SQL :
+
+   ```sql
+   insert into public.profiles (id, role, full_name, is_active, must_change_password)
+   values ('UUID_DE_L_ADMIN', 'admin', 'Nom de l’administrateur', true, false)
+   on conflict (id) do update
+     set role = 'admin', is_active = true, must_change_password = false;
+   ```
+
+4. Ajouter `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` et `SUPABASE_SECRET_KEY`
+   dans les variables d'environnement du backend Render. La clé secrète (ou
+   l'ancienne `service_role` si nécessaire) est privilégiée et ne doit jamais
+   être ajoutée à `cpo_frontend`, au dépôt public, ni à une variable `VITE_`.
+5. Redéployer le backend, puis vérifier `/api/health` :
+   `supabaseConfigured` doit être `true`. Se connecter sur `/staff.html` et
+   créer un compte professeur avec un mot de passe temporaire robuste, à
+   transmettre au professeur par un canal sûr.
+6. Vérifier les accès public, professeur et administrateur, notamment qu'un
+   visiteur et un professeur ne peuvent pas lire les résultats nominatifs.
+
+Les URL et clés de ce projet ne sont pas préremplies dans le dépôt. Avant de
+mettre des données réelles en production, il faut exécuter et vérifier des tests
+RLS adaptés au projet Supabase et configurer les sauvegardes. Le code de
+l'interface ne constitue pas à lui seul une garantie de sécurité : RLS et les
+permissions backend restent les autorités d'accès.
 =======
 # Cahier des charges fonctionnel et technique
 ## Plateforme web du CPO — Collège Privé de l’Ouest
