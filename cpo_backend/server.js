@@ -1,6 +1,6 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, resolve, sep } from "node:path";
+import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
@@ -74,7 +74,8 @@ async function handleContact(request, response) {
 }
 
 async function serveStatic(request, response) {
-  const requestedPath = request.url === "/" ? "/index.html" : request.url.split("?")[0];
+  const pathname = new URL(request.url, appUrl).pathname;
+  const requestedPath = pathname === "/" ? "/index.html" : pathname;
   const filePath = resolve(rootDirectory, `.${requestedPath}`);
   if (filePath !== rootDirectory && !filePath.startsWith(`${rootDirectory}${sep}`)) return sendJson(response, 403, { error: "Acces refuse." });
   try {
