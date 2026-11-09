@@ -58,6 +58,15 @@
           </div>
           <a class="text-link" href="#contact"><span data-i18n="news.empty.cta">Contacter le collège</span><span aria-hidden="true">→</span></a>
         </div>
+        <div class="news-empty news-error" role="status" data-news-error hidden>
+          <span class="news-empty-mark" aria-hidden="true">!</span>
+          <div class="news-empty-copy">
+            <p class="eyebrow" data-i18n="news.error.eyebrow">Information</p>
+            <h3 data-i18n="news.error.title">Les actualités ne sont pas disponibles pour le moment.</h3>
+            <p data-i18n="news.error.copy">Vérifiez votre connexion, puis réessayez.</p>
+          </div>
+          <button class="text-link news-retry" type="button" data-news-retry><span data-i18n="news.error.retry">Réessayer</span><span aria-hidden="true">↻</span></button>
+        </div>
         <div class="news-feed" data-news-feed aria-live="polite"></div>
       </section>
 
@@ -158,7 +167,7 @@
       <section class="application-section section-pad">
         <div class="application-shell reveal">
           <div class="application-heading"><p class="eyebrow" data-i18n="application.eyebrow">Gestion des admissions</p><h2 data-i18n="application.title">Avancer, étape<br /><em>par étape.</em></h2><p data-i18n="application.copy">Déposez une demande, échangez avec notre équipe et retrouvez les prochaines actions au même endroit.</p></div>
-          <div class="application-actions"><a class="application-action" href="#contact"><span class="action-index">A</span><span><strong data-i18n="application.request">Déposer une demande</strong><small data-i18n="application.request.copy">Commencer votre démarche d'admission.</small></span><span aria-hidden="true">↗</span></a><a class="application-action" href="#contact"><span class="action-index">B</span><span><strong data-i18n="application.follow">Suivre un dossier</strong><small data-i18n="application.follow.copy">Poser une question à l'équipe admissions.</small></span><span aria-hidden="true">↗</span></a></div>
+          <div class="application-actions"><a class="application-action" href="contact.html?subject=application"><span class="action-index">A</span><span><strong data-i18n="application.request">Déposer une demande</strong><small data-i18n="application.request.copy">Commencer votre démarche d'admission.</small></span><span aria-hidden="true">↗</span></a><a class="application-action" href="contact.html?subject=follow-up"><span class="action-index">B</span><span><strong data-i18n="application.follow">Suivre un dossier</strong><small data-i18n="application.follow.copy">Poser une question à l'équipe admissions.</small></span><span aria-hidden="true">↗</span></a></div>
         </div>
       </section>
 
