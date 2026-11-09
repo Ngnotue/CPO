@@ -84,6 +84,12 @@ async function loadPublications(language = currentLanguage) {
       const summary = document.createElement("p");
       summary.textContent = item.summary || "";
       article.append(meta, title, summary);
+      if (item.body?.trim()) {
+        const body = document.createElement("p");
+        body.className = "news-entry-body";
+        body.textContent = item.body;
+        article.append(body);
+      }
       for (const file of item.files || []) {
         if (!file.url) continue;
         const link = document.createElement("a");

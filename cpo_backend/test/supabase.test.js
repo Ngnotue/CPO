@@ -67,6 +67,113 @@ test("public publication feed sends ISO timestamps without double encoding", asy
   }
 });
 
+test("public publication feed selects and returns the full publication body", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  const item = { id: "3654d2da-1671-44c3-9913-3a89baa8fbde", kind: "news", title: "Rentrée", summary: "Résumé", body: "Le texte complet de la publication." };
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    requestUrl = new URL(input);
+    return new Response(JSON.stringify([item]), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const { response } = await call("/api/publications?locale=fr");
+    assert.equal(response.status, 200);
+    assert.match(requestUrl.searchParams.get("select"), /,body,/);
+    assert.equal(response.json().items[0].body, item.body);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
+test("admin can delete an attachment and its private storage object", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const fileId = "22222222-2222-4222-8222-222222222222";
+  const publicationId = "33333333-3333-4333-8333-333333333333";
+  const objectPath = `${userId}/${publicationId}/file.pdf`;
+  const calls = [];
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(input);
+    calls.push({ url, method: options.method || "GET" });
+    if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "admin@example.org" }), { status: 200 });
+    if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "admin", full_name: "Admin", is_active: true, must_change_password: false }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publication_files" && options.method === "GET") return new Response(JSON.stringify([{ id: fileId, publication_id: publicationId, bucket_id: "cpo-private-documents", object_path: objectPath }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publications") return new Response(JSON.stringify([{ id: publicationId, author_id: userId }]), { status: 200 });
+    if (url.pathname === `/storage/v1/object/cpo-private-documents/${objectPath}` && options.method === "DELETE") return new Response(null, { status: 200 });
+    if (url.pathname === "/rest/v1/publication_files" && options.method === "DELETE") return new Response(JSON.stringify([{ id: fileId }]), { status: 200 });
+    throw new Error(`Unexpected mocked request: ${options.method || "GET"} ${url.pathname}`);
+  };
+  try {
+    const { handled, response } = await call(`/api/staff/publication-files/${fileId}`, {
+      method: "DELETE",
+      headers: { origin: "http://localhost:8000", cookie: "cpo_access=test-access" }
+    });
+    assert.equal(handled, true);
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.json(), { ok: true });
+    assert.ok(calls.some(({ url, method }) => url.pathname.startsWith("/storage/v1/object/") && method === "DELETE"));
+    assert.ok(calls.some(({ url, method }) => url.pathname === "/rest/v1/publication_files" && method === "DELETE"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
+test("teacher cannot delete an attachment on a publication owned by another user", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const ownerId = "44444444-4444-4444-8444-444444444444";
+  const fileId = "22222222-2222-4222-8222-222222222222";
+  const publicationId = "33333333-3333-4333-8333-333333333333";
+  const calls = [];
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(input);
+    calls.push({ url, method: options.method || "GET" });
+    if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "teacher@example.org" }), { status: 200 });
+    if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "teacher", full_name: "Teacher", is_active: true, must_change_password: false }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publication_files") return new Response(JSON.stringify([{ id: fileId, publication_id: publicationId, bucket_id: "cpo-private-documents", object_path: `${userId}/${publicationId}/file.pdf` }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publications") return new Response(JSON.stringify([{ id: publicationId, author_id: ownerId }]), { status: 200 });
+    throw new Error(`Unexpected mocked request: ${options.method || "GET"} ${url.pathname}`);
+  };
+  try {
+    const { response } = await call(`/api/staff/publication-files/${fileId}`, {
+      method: "DELETE",
+      headers: { origin: "http://localhost:8000", cookie: "cpo_access=test-access" }
+    });
+    assert.equal(response.status, 404);
+    assert.equal(calls.some(({ url }) => url.pathname.startsWith("/storage/v1/object/")), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
 test("staff session is not authenticated when database settings are absent", async () => {
   const oldUrl = process.env.SUPABASE_URL;
   const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;

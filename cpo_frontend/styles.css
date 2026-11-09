@@ -111,6 +111,7 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .news-entry-meta { color:var(--ink-soft); font-size:10px; font-weight:700; letter-spacing:.12em; margin:0 0 14px; text-transform:uppercase; }
 .news-entry h3 { font-family:Fraunces,serif; font-size:clamp(23px,2.4vw,31px); font-weight:500; line-height:1.08; margin:0 0 12px; }
 .news-entry>p:last-child { color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0; }
+.news-entry>p.news-entry-body { color:var(--ink-soft); font-size:14px; line-height:1.7; margin:14px 0 0; overflow-wrap:anywhere; white-space:pre-line; }
 .news-entry--important { border-color:#a14a36; }
 .news-file-link,.staff-file-link { border-bottom:1px solid var(--ink); display:inline-block; font-size:11px; font-weight:700; margin:14px 12px 0 0; overflow-wrap:anywhere; padding-bottom:3px; }
 .site-footer .footer-staff-link { border-bottom:1px solid var(--line); font-size:11px; font-weight:700; letter-spacing:.08em; padding-bottom:5px; text-transform:uppercase; }
@@ -154,7 +155,12 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .staff-list-row h3 { font-family:Fraunces,serif; font-size:21px; font-weight:500; margin:0 0 6px; }
 .staff-list-meta,.staff-list-summary,.staff-list-empty { color:var(--ink-soft); font-size:12px; line-height:1.5; margin:0 0 5px; }
 .staff-list-summary { max-width:55ch; }
+.staff-list-body { color:var(--ink-soft); font-size:12px; line-height:1.55; margin:8px 0 0; max-width:65ch; overflow-wrap:anywhere; white-space:pre-line; }
 .staff-file-current { color:var(--ink-soft); font-size:12px; margin:0; overflow-wrap:anywhere; }
+.staff-attachment-row { align-items:center; display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; padding:7px 0; }
+.staff-attachment-remove { color:#8f2f28; }
+.staff-attachment-remove:disabled { cursor:wait; opacity:.5; }
+.staff-file-pending { padding:7px 0; }
 .staff-list-actions { display:flex; flex-shrink:0; gap:8px; }
 .staff-list-empty { padding:18px 0; }
 .staff-private-result strong,.staff-private-result span { font-size:13px; }

@@ -339,7 +339,7 @@ export async function handleSupabaseRoute(request, response, url) {
       const now = new Date().toISOString();
       const locale = searchParams.get("locale") === "en" ? "en" : "fr";
       const query = new URLSearchParams({
-        select: "id,kind,title,slug,summary,category,locale,is_important,published_at,expires_at,publication_files(id,original_name,content_type,object_path,bucket_id)",
+        select: "id,kind,title,slug,summary,body,category,locale,is_important,published_at,expires_at,publication_files(id,original_name,content_type,object_path,bucket_id)",
         status: "eq.published",
         visibility: "eq.public",
         locale: `eq.${locale}`,
@@ -453,6 +453,31 @@ export async function handleSupabaseRoute(request, response, url) {
       }
       const rows = await postgrest("publications", { method: "POST", accessToken: identity.accessToken, body: input, prefer: "return=representation" });
       return sendJson(response, 201, { item: rows?.[0] || null }), true;
+    }
+
+    const publicationFileMatch = pathname.match(/^\/api\/staff\/publication-files\/([0-9a-f-]{36})$/i);
+    if (publicationFileMatch && method === "DELETE") {
+      if (!requireSameOrigin(request, response)) return true;
+      const identity = await authenticatedStaff(request, response);
+      if (!identity) return true;
+      if (!UUID_PATTERN.test(publicationFileMatch[1])) return sendJson(response, 400, { error: "Identifiant de pièce jointe invalide." }), true;
+      const fileFilter = `id=eq.${encodeURIComponent(publicationFileMatch[1])}`;
+      const files = await postgrest(`publication_files?${fileFilter}&select=id,publication_id,bucket_id,object_path&limit=1`, { accessToken: identity.accessToken });
+      const file = files?.[0];
+      if (!file || file.bucket_id !== "cpo-private-documents") return sendJson(response, 404, { error: "Pièce jointe introuvable ou accès refusé." }), true;
+      const publications = await postgrest(`publications?id=eq.${encodeURIComponent(file.publication_id)}&select=id,author_id&limit=1`, { accessToken: identity.accessToken });
+      const publication = publications?.[0];
+      if (!publication || (identity.profile.role !== "admin" && publication.author_id !== identity.user.id)) {
+        return sendJson(response, 404, { error: "Pièce jointe introuvable ou accès refusé." }), true;
+      }
+      await deleteStoredObject(file.bucket_id, file.object_path);
+      const deleted = await postgrest(`publication_files?${fileFilter}`, {
+        method: "DELETE",
+        accessToken: identity.accessToken,
+        prefer: "return=representation"
+      });
+      if (!deleted?.length) return sendJson(response, 404, { error: "Pièce jointe déjà supprimée ou accès refusé." }), true;
+      return sendJson(response, 200, { ok: true }), true;
     }
 
     if (pathname === "/api/staff/uploads/sign" && method === "POST") {

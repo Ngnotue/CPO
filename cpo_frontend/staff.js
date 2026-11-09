@@ -6,6 +6,7 @@ const adminPanels = document.querySelectorAll("[data-admin-panel]");
 const staffNotice = document.querySelector("[data-staff-notice]");
 let currentProfile = null;
 let editingPublicationId = "";
+let editingFiles = [];
 
 async function request(path, options = {}) {
   const response = await fetch(path, {
@@ -94,6 +95,7 @@ async function loadPublicationsForStaff() {
       addText(copy, "p", "staff-list-meta", `${item.kind} · ${item.locale.toUpperCase()} · ${item.status} · ${dateLabel(item.published_at || item.updated_at)}`);
       addText(copy, "h3", "", item.title);
       addText(copy, "p", "staff-list-summary", item.summary);
+      if (item.body?.trim()) addText(copy, "p", "staff-list-body", item.body);
       for (const file of item.files || []) {
         if (!file.url) continue;
         const link = addText(copy, "a", "staff-file-link", `↳ ${file.name}`);
@@ -127,24 +129,15 @@ function editPublication(item) {
     if (form.elements[field]) form.elements[field].value = item[field] ?? (field === "locale" ? "fr" : "");
   }
   form.elements.is_important.checked = item.is_important === true;
-  document.querySelector("[data-attachment-list]").replaceChildren();
-  for (const file of item.files || []) {
-    const row = document.createElement("p");
-    row.className = "staff-file-current";
-    if (file.url) {
-      const link = addText(row, "a", "", file.name);
-      link.href = file.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-    } else addText(row, "span", "", file.name);
-    document.querySelector("[data-attachment-list]").append(row);
-  }
+  editingFiles = [...(item.files || [])];
+  renderAttachmentList(form.querySelector("[data-publication-files]").files);
   document.querySelector("[data-editor-heading]").textContent = "Modifier une publication";
   form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function resetEditor() {
   editingPublicationId = "";
+  editingFiles = [];
   document.querySelector("[data-publication-form]").reset();
   document.querySelector("[data-publication-form]").elements.id.value = "";
   document.querySelector("[data-attachment-list]").replaceChildren();
@@ -285,10 +278,46 @@ document.querySelector("[data-publication-form]").addEventListener("submit", asy
 });
 
 document.querySelector('[data-publication-form] [data-publication-files]').addEventListener("change", (event) => {
+  renderAttachmentList(event.currentTarget.files);
+});
+
+function renderAttachmentList(pendingFiles = []) {
   const list = document.querySelector("[data-attachment-list]");
   list.replaceChildren();
-  for (const file of event.currentTarget.files) addText(list, "p", "staff-file-current", `${safeUploadName(file.name)} · ${(file.size / (1024 * 1024)).toFixed(1)} Mo`);
-});
+  for (const file of editingFiles) {
+    const row = document.createElement("div");
+    row.className = "staff-attachment-row";
+    if (file.url) {
+      const link = addText(row, "a", "staff-file-current", file.name);
+      link.href = file.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    } else addText(row, "span", "staff-file-current", file.name);
+    const remove = addText(row, "button", "staff-secondary staff-attachment-remove", "Supprimer");
+    remove.type = "button";
+    remove.setAttribute("aria-label", `Supprimer la pièce jointe ${file.name}`);
+    remove.addEventListener("click", () => removePublicationFile(file, remove));
+    list.append(row);
+  }
+  for (const file of pendingFiles) {
+    addText(list, "p", "staff-file-current staff-file-pending", `${safeUploadName(file.name)} · ${(file.size / (1024 * 1024)).toFixed(1)} Mo · À ajouter`);
+  }
+}
+
+async function removePublicationFile(file, button) {
+  if (!window.confirm(`Supprimer définitivement la pièce jointe « ${file.name} » ?`)) return;
+  button.disabled = true;
+  try {
+    await request(`/api/staff/publication-files/${encodeURIComponent(file.id)}`, { method: "DELETE" });
+    editingFiles = editingFiles.filter((entry) => entry.id !== file.id);
+    renderAttachmentList(document.querySelector("[data-publication-files]").files);
+    feedback("[data-publication-feedback]", "Pièce jointe supprimée.");
+    await loadPublicationsForStaff();
+  } catch (error) {
+    button.disabled = false;
+    feedback("[data-publication-feedback]", error.message, true);
+  }
+}
 
 document.querySelector("[data-teacher-form]").addEventListener("submit", async (event) => {
   event.preventDefault();
