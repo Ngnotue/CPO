@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { FixedWindowRateLimiter } from "./rate-limit.js";
 
 const PUBLICATION_KINDS = new Set(["news", "announcement", "event", "course", "exercise", "resource"]);
 const PUBLICATION_STATUSES = new Set(["draft", "published", "archived"]);
@@ -7,7 +8,9 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 const ACCESS_COOKIE = "cpo_access";
 const REFRESH_COOKIE = "cpo_refresh";
 const ACCESS_FALLBACK_SECONDS = 3600;
+const REFRESH_IDLE_SECONDS = 12 * 60 * 60;
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+const staffLoginRateLimiter = new FixedWindowRateLimiter();
 const ALLOWED_FILE_TYPES = new Set([
   "application/pdf",
   "application/msword",
@@ -77,7 +80,7 @@ function storeSession(response, request, session) {
   const age = Math.max(60, Math.min(Number(session.expires_in) || ACCESS_FALLBACK_SECONDS, 24 * 60 * 60));
   response.setHeader("Set-Cookie", [
     cookieHeader(ACCESS_COOKIE, session.access_token, request, age),
-    cookieHeader(REFRESH_COOKIE, session.refresh_token, request, 60 * 60 * 24 * 30)
+    cookieHeader(REFRESH_COOKIE, session.refresh_token, request, REFRESH_IDLE_SECONDS)
   ]);
 }
 
@@ -127,6 +130,19 @@ async function supabaseRequest(path, { method = "GET", body, accessToken, admin 
 
 function postgrest(path, options = {}) {
   return supabaseRequest(`/rest/v1/${path}`, options);
+}
+
+async function recordAudit(actorId, action, targetType, targetId, metadata = {}) {
+  try {
+    await postgrest("audit_log", {
+      method: "POST",
+      admin: true,
+      body: { actor_id: actorId, action, target_type: targetType, target_id: targetId, metadata },
+      prefer: "return=minimal"
+    });
+  } catch {
+    console.error("CPO audit event could not be stored:", action);
+  }
 }
 
 function authRequest(path, options = {}) {
@@ -367,6 +383,12 @@ export async function handleSupabaseRoute(request, response, url) {
       const { identifier, email, password } = await readJson(request, 8 * 1024);
       const cleanIdentifier = safeString(identifier || email, 254, "Identifiant", { required: true });
       if (typeof password !== "string" || password.length < 1 || password.length > 1024) throw Object.assign(new Error("Mot de passe invalide."), { status: 400 });
+      const loginLimit = staffLoginRateLimiter.consume(cleanIdentifier.toLowerCase(), { limit: 8, windowMs: 15 * 60 * 1000 });
+      if (!loginLimit.allowed) {
+        response.writeHead(429, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Retry-After": String(loginLimit.retryAfterSeconds) });
+        response.end(JSON.stringify({ error: "Trop de tentatives de connexion. Réessayez après le délai indiqué." }));
+        return true;
+      }
       let loginEmail = cleanIdentifier.toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) {
         const matches = await postgrest(`profiles?teacher_code=eq.${encodeURIComponent(cleanIdentifier)}&select=id,role,is_active&limit=1`, { admin: true });
@@ -384,6 +406,7 @@ export async function handleSupabaseRoute(request, response, url) {
         return sendJson(response, 403, { error: "Ce compte n'a pas accès à l'espace du personnel." }), true;
       }
       storeSession(response, request, session);
+      staffLoginRateLimiter.clear(cleanIdentifier.toLowerCase());
       return sendJson(response, 200, { user: { id: user.id, email: user.email }, profile }), true;
     }
 
@@ -452,7 +475,15 @@ export async function handleSupabaseRoute(request, response, url) {
         }
       }
       const rows = await postgrest("publications", { method: "POST", accessToken: identity.accessToken, body: input, prefer: "return=representation" });
+      await recordAudit(identity.user.id, "publication.created", "publication", rows?.[0]?.id || null, { kind: input.kind, status: input.status, visibility: input.visibility, locale: input.locale });
       return sendJson(response, 201, { item: rows?.[0] || null }), true;
+    }
+
+    if (pathname === "/api/staff/audit" && method === "GET") {
+      const identity = await authenticatedStaff(request, response, ["admin"]);
+      if (!identity) return true;
+      const events = await postgrest("audit_log?select=id,actor_id,action,target_type,target_id,created_at&order=created_at.desc&limit=100", { accessToken: identity.accessToken });
+      return sendJson(response, 200, { events }), true;
     }
 
     const publicationFileMatch = pathname.match(/^\/api\/staff\/publication-files\/([0-9a-f-]{36})$/i);
@@ -477,6 +508,7 @@ export async function handleSupabaseRoute(request, response, url) {
         prefer: "return=representation"
       });
       if (!deleted?.length) return sendJson(response, 404, { error: "Pièce jointe déjà supprimée ou accès refusé." }), true;
+      await recordAudit(identity.user.id, "publication_file.deleted", "publication_file", file.id, { publication_id: file.publication_id });
       return sendJson(response, 200, { ok: true }), true;
     }
 
@@ -575,12 +607,14 @@ export async function handleSupabaseRoute(request, response, url) {
         const rows = await postgrest(`publications?${filter}`, { method: "PATCH", accessToken: identity.accessToken, body: { status: "archived" }, prefer: "return=representation" });
         if (!rows?.length) return sendJson(response, 404, { error: "Publication introuvable ou accès refusé." }), true;
         await syncPublicationFiles(publicationMatch[1], identity.accessToken, false);
+        await recordAudit(identity.user.id, "publication.archived", "publication", publicationMatch[1]);
         return sendJson(response, 200, { item: rows[0] }), true;
       }
       const updates = publicationInput(await readJson(request), { partial: true });
       const rows = await postgrest(`publications?${filter}`, { method: "PATCH", accessToken: identity.accessToken, body: updates, prefer: "return=representation" });
       if (!rows?.length) return sendJson(response, 404, { error: "Publication introuvable ou accès refusé." }), true;
       await syncPublicationFiles(publicationMatch[1], identity.accessToken, rows[0].status === "published" && rows[0].visibility === "public");
+      await recordAudit(identity.user.id, "publication.updated", "publication", publicationMatch[1], { status: rows[0].status, visibility: rows[0].visibility, locale: rows[0].locale });
       return sendJson(response, 200, { item: rows[0] }), true;
     }
 

@@ -173,6 +173,7 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .staff-list-empty { padding:18px 0; }
 .staff-private-result strong,.staff-private-result span { font-size:13px; }
 .staff-private-result { align-items:flex-start; flex-direction:column; gap:2px; }
+.staff-audit-row { align-items:flex-start; }
 .is-error { color:#9d342a!important; }
 @media(max-width:850px) { .staff-main { padding:60px 6vw 80px; } .staff-dashboard { grid-template-columns:1fr; } }
 @media(max-width:520px) { .staff-field-grid { grid-template-columns:1fr; } .staff-welcome,.staff-module-heading { align-items:flex-start; flex-direction:column; } .staff-list-row { align-items:flex-start; flex-direction:column; } .staff-list-actions { flex-wrap:wrap; } }

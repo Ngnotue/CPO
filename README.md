@@ -112,6 +112,17 @@ résultats nominatifs et journal d'audit.
   aux administrateurs. Ils ne sont jamais renvoyés au flux public.
 - Les pièces jointes sont envoyées vers un bucket privé avec des URL signées;
   les clés Supabase privilégiées restent uniquement sur le backend.
+- Le backend limite les connexions répétées pour un même identifiant et limite
+  les demandes de contact répétées depuis une même adresse e-mail. Ces limites
+  sont conservées en mémoire du processus et complètent, sans remplacer, les
+  protections de Supabase Auth et du fournisseur e-mail.
+- Les cookies de renouvellement du portail expirent après 12 heures sans
+  renouvellement d'activité; les connexions actives les renouvellent avec la
+  session Supabase.
+- Le journal administrateur conserve les changements de publications, les
+  suppressions de pièces jointes, la gestion des comptes professeurs et les
+  créations de résultats privés, sans y recopier les notes ou noms d'élèves.
+- La validation des certificats TLS SMTP est toujours activée dans le backend.
 
 ### Préparer Supabase
 

@@ -76,7 +76,7 @@ async function loadSession() {
 async function refreshDashboard() {
   await loadPublicationsForStaff();
   if (currentProfile?.role !== "admin") return;
-  await Promise.all([loadTeachers(), loadPrivateResults()]);
+  await Promise.all([loadTeachers(), loadPrivateResults(), loadAuditLog()]);
 }
 
 async function loadPublicationsForStaff() {
@@ -197,6 +197,28 @@ async function loadPrivateResults() {
       list.append(row);
     }
     if (!results.length) addText(list, "p", "staff-list-empty", "Aucun résultat enregistré.");
+  } catch (error) {
+    addText(list, "p", "staff-list-empty is-error", error.message);
+  }
+}
+
+async function loadAuditLog() {
+  const list = document.querySelector("[data-audit-list]");
+  if (!list) return;
+  list.replaceChildren();
+  try {
+    const { events = [] } = await request("/api/staff/audit");
+    for (const event of events) {
+      const row = document.createElement("article");
+      row.className = "staff-list-row staff-audit-row";
+      const copy = document.createElement("div");
+      addText(copy, "p", "staff-list-meta", `${dateLabel(event.created_at)} · ${event.target_type}`);
+      addText(copy, "h3", "", event.action.replaceAll(".", " · "));
+      if (event.target_id) addText(copy, "p", "staff-list-meta", `Référence : ${event.target_id}`);
+      row.append(copy);
+      list.append(row);
+    }
+    if (!events.length) addText(list, "p", "staff-list-empty", "Aucune action enregistrée.");
   } catch (error) {
     addText(list, "p", "staff-list-empty is-error", error.message);
   }

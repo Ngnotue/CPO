@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import { handleSupabaseRoute, isSupabaseConfigured } from "./supabase.js";
+import { FixedWindowRateLimiter } from "./rate-limit.js";
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ const port = Number(process.env.PORT || 8000);
 const appUrl = process.env.APP_URL || "http://localhost:8000";
 const recipient = process.env.CONTACT_RECIPIENT || "nnoguem@gmail.com";
 const maxBodySize = 20 * 1024;
+const contactRateLimiter = new FixedWindowRateLimiter();
 
 function sendJson(response, status, payload) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
@@ -25,7 +27,7 @@ function getTransporter() {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 465),
     secure: String(process.env.SMTP_SECURE || "true") === "true",
-    tls: { rejectUnauthorized: String(process.env.SMTP_TLS_REJECT_UNAUTHORIZED || "true") === "true" },
+    tls: { rejectUnauthorized: true },
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD.replace(/\s+/g, "") }
   });
 }
@@ -48,6 +50,11 @@ async function handleContact(request, response) {
     if (!cleanName || !cleanEmail || !cleanMessage) return sendJson(response, 400, { error: "Tous les champs sont obligatoires." });
     if (cleanName.length > 120 || cleanEmail.length > 254 || cleanMessage.length > 5000) return sendJson(response, 413, { error: "Le message est trop long." });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return sendJson(response, 400, { error: "L'adresse e-mail n'est pas valide." });
+    const limit = contactRateLimiter.consume(cleanEmail.toLowerCase(), { limit: 3, windowMs: 10 * 60 * 1000 });
+    if (!limit.allowed) {
+      response.writeHead(429, { "Content-Type": "application/json; charset=utf-8", "Retry-After": String(limit.retryAfterSeconds) });
+      return response.end(JSON.stringify({ error: "Trop de messages ont été envoyés depuis cette adresse. Réessayez un peu plus tard." }));
+    }
     const transporter = getTransporter();
     if (!transporter) return sendJson(response, 503, { error: "Le service e-mail n'est pas encore configure. Ajoutez les variables SMTP dans .env." });
     await transporter.sendMail({

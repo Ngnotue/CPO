@@ -30,7 +30,7 @@ The public website is French-first and includes an English version. The current 
 
 - Visitors can browse public information without an account.
 - The current contact form submits to the backend API and requires server-side SMTP environment configuration.
-- The existing project brief describes future publication tools and separate administrator/teacher accounts; these are planned capabilities, not implemented functionality.
+- The staff portal includes administrator/teacher sign-in, publications, attachment management, teacher accounts, and private result entry. These workflows require the configured Supabase project and authorized accounts.
 - The homepage may present school news, announcements, admissions information, family links, and a school gallery when verified CPO content and assets are supplied.
 - Do not invent current announcements, examination results, contact details, school claims, or student imagery. Missing factual content must remain an explicit placeholder until supplied by the user.
 - Reuse the CPO name, existing favicon, existing page content, and working contact behavior. The Collège Jean Tabi website is a structural reference only; its text, images, branding, and distinctive page design are not to be copied.
@@ -51,3 +51,4 @@ Keep the CPO / Collège Privé de l'Ouest identity and its French-first, bilingu
 - Keep public pages lightweight and usable on mobile networks.
 - Distinguish verified school information from placeholders.
 - Preserve the existing working admissions/contact path.
+- Keep the founder portrait and school gallery as clearly labeled placeholders until the CPO supplies approved photos.
