@@ -11,6 +11,12 @@ services:
         value: 8000
       - key: CONTACT_RECIPIENT
         value: nnoguem@gmail.com
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: CPO | Collège Privé de l'Ouest
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT

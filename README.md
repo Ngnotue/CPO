@@ -42,7 +42,11 @@ npm install --prefix cpo_backend
 Copy-Item cpo_backend/.env.example cpo_backend/.env
 ```
 
-Complétez ensuite les variables `SMTP_USER` et `SMTP_PASSWORD` dans `cpo_backend/.env`. Pour Gmail, utilisez un mot de passe d'application et non votre mot de passe principal.
+Pour l'envoi des courriels depuis Render, utilisez de préférence l'API HTTPS Brevo. Ajoutez `BREVO_API_KEY` et `BREVO_SENDER_EMAIL` dans l'environnement; l'adresse d'expéditeur doit être vérifiée dans Brevo. `BREVO_SENDER_NAME` est facultatif. En local, renseignez ces mêmes variables dans `cpo_backend/.env`.
+
+L'endpoint `/api/health` indique maintenant le fournisseur (`brevo` ou `smtp`) et si sa configuration de base est présente, sans révéler la clé ni l'adresse d'expéditeur.
+
+Le backend garde SMTP comme solution de repli si `BREVO_API_KEY` est absent. Pour ce mode, renseignez `SMTP_USER` et `SMTP_PASSWORD`; pour Gmail, utilisez un mot de passe d'application, pas le mot de passe normal du compte. Render peut bloquer les connexions SMTP sortantes, c'est pourquoi Brevo par API est privilégié.
 
 Lancer le site :
 
@@ -68,12 +72,10 @@ Sans configuration SMTP, le site retourne un message explicite au lieu d'échoue
 4. Configurer les variables d'environnement :
    - `PORT=8000`
    - `CONTACT_RECIPIENT=nnoguem@gmail.com`
-   - `SMTP_HOST=smtp.gmail.com`
-   - `SMTP_PORT=465`
-   - `SMTP_SECURE=true`
-   - `SMTP_TLS_REJECT_UNAUTHORIZED=true`
-   - `SMTP_USER=...`
-   - `SMTP_PASSWORD=...`
+  - `BREVO_API_KEY=...` (clé API confidentielle, backend seulement)
+  - `BREVO_SENDER_EMAIL=...` (adresse validée dans Brevo)
+  - `BREVO_SENDER_NAME=CPO | Collège Privé de l'Ouest` (facultatif)
+  - SMTP (`SMTP_USER`, `SMTP_PASSWORD`, etc.) uniquement si la solution Brevo n'est pas activée.
 5. Définir la commande de démarrage :
 
 ```bash
@@ -86,9 +88,9 @@ Un `Dockerfile` peut être ajouté pour un déploiement dans un environnement pl
 
 ## Bonnes pratiques de production
 
-- Ne pas versionner les identifiants SMTP réels.
+- Ne pas versionner les clés Brevo ni les identifiants SMTP réels.
 - Utiliser des variables d’environnement sur l’hébergeur.
-- Vérifier la délivrabilité du compte mail utilisé.
+- Vérifier l'adresse expéditeur dans Brevo avant d'envoyer.
 - Tester le formulaire après publication sur la vraie URL de production.
 
 ## Base de données et portail Supabase

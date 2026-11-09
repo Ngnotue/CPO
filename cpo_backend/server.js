@@ -3,33 +3,21 @@ import { readFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
 import { handleSupabaseRoute, isSupabaseConfigured } from "./supabase.js";
 import { FixedWindowRateLimiter } from "./rate-limit.js";
+import { getContactEmailStatus, sendContactEmail } from "./email-sender.js";
 
 dotenv.config();
 
 const rootDirectory = fileURLToPath(new URL("../cpo_frontend", import.meta.url));
 const port = Number(process.env.PORT || 8000);
 const appUrl = process.env.APP_URL || "http://localhost:8000";
-const recipient = process.env.CONTACT_RECIPIENT || "nnoguem@gmail.com";
 const maxBodySize = 20 * 1024;
 const contactRateLimiter = new FixedWindowRateLimiter();
 
 function sendJson(response, status, payload) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(payload));
-}
-
-function getTransporter() {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) return null;
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: String(process.env.SMTP_SECURE || "true") === "true",
-    tls: { rejectUnauthorized: true },
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD.replace(/\s+/g, "") }
-  });
 }
 
 async function readRequestBody(request) {
@@ -55,21 +43,20 @@ async function handleContact(request, response) {
       response.writeHead(429, { "Content-Type": "application/json; charset=utf-8", "Retry-After": String(limit.retryAfterSeconds) });
       return response.end(JSON.stringify({ error: "Trop de messages ont été envoyés depuis cette adresse. Réessayez un peu plus tard." }));
     }
-    const transporter = getTransporter();
-    if (!transporter) return sendJson(response, 503, { error: "Le service e-mail n'est pas encore configure. Ajoutez les variables SMTP dans .env." });
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to: recipient,
-      replyTo: cleanEmail,
-      subject: `CPO - ${subject || "Question générale"} - ${cleanName}`,
-      text: `Nom : ${cleanName}\nE-mail : ${cleanEmail}\nObjet : ${subject || "Question générale"}\n\n${cleanMessage}`
-    });
+    await sendContactEmail({ name: cleanName, email: cleanEmail, subject, message: cleanMessage });
     return sendJson(response, 200, { message: "Message envoye avec succes." });
   } catch (error) {
     if (error.message === "REQUEST_TOO_LARGE") return sendJson(response, 413, { error: "La requête est trop volumineuse." });
     if (error instanceof SyntaxError) return sendJson(response, 400, { error: "Le format de la requête est invalide." });
-    console.error("Contact email error:", error.code || "UNKNOWN", error.message);
-    return sendJson(response, 500, { error: "Le message n'a pas pu etre envoye.", code: error.code || "SMTP_ERROR" });
+    const code = error.code || "EMAIL_SEND_FAILED";
+    console.error("Contact email error:", code);
+    const status = error.status === 503 ? 503 : 502;
+    const errorMessage = error.status === 503
+      ? "Le service d’envoi n’est pas encore configuré dans Render."
+      : error.code?.startsWith("BREVO_")
+        ? "Brevo n’a pas accepté l’envoi. Vérifiez que l’expéditeur est validé dans Brevo et que la clé API est correcte."
+        : "Le service e-mail est temporairement indisponible. Réessayez plus tard ou écrivez directement à l’adresse indiquée.";
+    return sendJson(response, status, { error: errorMessage, code });
   }
 }
 
@@ -94,6 +81,7 @@ const server = http.createServer(async (request, response) => {
       status: "ok",
       service: "cpo-contact-server",
       appUrl,
+      contactEmail: getContactEmailStatus(),
       supabaseConfigured: isSupabaseConfigured(),
       timestamp: new Date().toISOString()
     });
