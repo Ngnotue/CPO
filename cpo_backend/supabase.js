@@ -347,11 +347,12 @@ export async function handleSupabaseRoute(request, response, url) {
   try {
     if (method === "GET" && pathname === "/api/publications") {
       if (!configuration()) return sendJson(response, 200, { configured: false, items: [] }), true;
-      const allowedKinds = ["news", "announcement", "event"];
+      const allowedKinds = ["news", "announcement", "event", "course", "exercise", "resource"];
       const requestedKinds = (searchParams.get("kind") || "news,announcement,event").split(",");
       const kinds = requestedKinds.filter((kind) => allowedKinds.includes(kind));
       if (!kinds.length) return sendJson(response, 200, { configured: true, items: [] }), true;
-      const limit = Math.max(1, Math.min(Number(searchParams.get("limit")) || 6, 12));
+      const limit = Math.max(1, Math.min(Number(searchParams.get("limit")) || 6, 24));
+      const offset = Math.max(0, Math.min(Number(searchParams.get("offset")) || 0, 1000));
       const now = new Date().toISOString();
       const locale = searchParams.get("locale") === "en" ? "en" : "fr";
       const query = new URLSearchParams({
@@ -363,7 +364,8 @@ export async function handleSupabaseRoute(request, response, url) {
         published_at: `lte.${now}`,
         or: `(expires_at.is.null,expires_at.gt.${now})`,
         order: "is_important.desc,published_at.desc",
-        limit: String(limit)
+        limit: String(limit),
+        offset: String(offset)
       });
       const items = await postgrest(`publications?${query.toString()}`);
       for (const item of items || []) {

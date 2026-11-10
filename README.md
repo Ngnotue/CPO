@@ -26,6 +26,7 @@ cpo_frontend/
   about.html         # page présentation du collège
   admissions.html    # page admissions
   contact.html       # page contact dédiée
+  resources.html    # cours, exercices et documents publics
   styles.css         # design, thème clair/sombre et responsive
   script.js          # traductions, thème, navigation et formulaire
 cpo_backend/
@@ -171,6 +172,9 @@ nominatifs.
   passe temporaire, la gestion des publications et, pour l'administrateur, la
   création/suspension de comptes professeurs et l'enregistrement privé de
   résultats.
+- `cpo_frontend/resources.html` présente au public les cours, exercices et
+  documents que le personnel a explicitement publiés avec une visibilité
+  publique; les visiteurs peuvent filtrer par type et ouvrir les pièces jointes.
 - Le navigateur ne reçoit jamais la clé Supabase secrète. Les actions passent
   par le backend Node et les accès SQL sont protégés par Row Level Security
   (RLS).

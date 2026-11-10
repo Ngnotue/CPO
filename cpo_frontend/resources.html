@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Cours, exercices et ressources publiques du Collège Privé de l'Ouest." />
+    <meta name="robots" content="index, follow" />
+    <title>Ressources pédagogiques | CPO</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header site-header--inner">
+      <a class="brand" href="index.html" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a>
+      <nav class="main-nav" aria-label="Navigation principale">
+        <a href="about.html" data-i18n="nav.college">Le collège</a>
+        <a href="index.html#actualites" data-i18n="nav.news">Actualités</a>
+        <a href="resources.html" data-i18n="nav.resources">Ressources</a>
+        <a href="index.html#fondateur" data-i18n="nav.founder">Le fondateur</a>
+        <a href="index.html#organisation" data-i18n="nav.organization">Organisation</a>
+        <a href="index.html#admissions" data-i18n="nav.admissions">Admissions</a>
+        <a href="contact.html" data-i18n="nav.contact">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="language-toggle" type="button" data-language-toggle aria-label="Changer de langue"><span data-language-label>EN</span></button>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Activer le thème sombre"><svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg><svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.4A8.5 8.5 0 0 1 8.6 3.3 8.5 8.5 0 1 0 20.7 15.4Z"/></svg><span class="sr-only" data-theme-label>Thème sombre</span></button>
+        <button class="menu-toggle" type="button" data-menu-toggle aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span></button>
+      </div>
+    </header>
+    <main>
+      <section class="page-hero">
+        <div class="page-hero-inner">
+          <p class="eyebrow" data-i18n="resources.eyebrow">Pour apprendre et réviser</p>
+          <h1 data-i18n="resources.title">Cours et ressources<br /><em>à consulter.</em></h1>
+          <p data-i18n="resources.intro">Retrouvez ici les cours, exercices et documents que le personnel du CPO a choisi de publier. Les ressources publiques sont accessibles sans compte.</p>
+        </div>
+      </section>
+      <section class="resources-section section-pad" aria-labelledby="resources-list-title">
+        <div class="resources-toolbar">
+          <label for="resource-filter" data-i18n="resources.filter.label">Type de ressource</label>
+          <select id="resource-filter" data-resource-filter>
+            <option value="all" data-i18n="resources.filter.all">Toutes</option>
+            <option value="course" data-i18n="resources.filter.course">Cours</option>
+            <option value="exercise" data-i18n="resources.filter.exercise">Exercices</option>
+            <option value="resource" data-i18n="resources.filter.resource">Documents</option>
+          </select>
+        </div>
+        <h2 class="sr-only" id="resources-list-title" data-i18n="nav.resources">Ressources</h2>
+        <p class="resources-loading" data-resources-loading role="status" data-i18n="resources.loading">Chargement des ressources…</p>
+        <div class="resources-empty" data-resources-empty hidden role="status">
+          <h3 data-i18n="resources.empty.title">Aucune ressource publiée pour le moment.</h3>
+          <p data-i18n="resources.empty.copy">Les ressources apparaîtront ici lorsqu’un membre du personnel les aura publiées.</p>
+        </div>
+        <div class="resources-error" data-resources-error hidden role="alert">
+          <h3 data-i18n="resources.error.title">Les ressources ne sont pas disponibles pour le moment.</h3>
+          <p data-i18n="resources.error.copy">Vérifiez votre connexion, puis réessayez.</p>
+          <button class="button button-dark" type="button" data-resources-retry data-i18n="resources.retry">Réessayer</button>
+        </div>
+        <div class="resources-grid" data-resources-list aria-live="polite"></div>
+        <button class="button button-dark resources-more" type="button" data-resources-more hidden data-i18n="resources.more">Voir plus</button>
+      </section>
+    </main>
+    <footer class="site-footer"><a class="brand" href="index.html" aria-label="CPO, accueil"><span class="brand-mark">CPO</span><span class="brand-name">Collège Privé<br />de l'Ouest</span></a><p data-i18n="footer.copy">Un cadre pour apprendre, une communauté pour avancer.</p><a class="footer-mail" href="mailto:nnoguem@gmail.com">nnoguem@gmail.com <span aria-hidden="true">↗</span></a><a class="footer-staff-link" href="staff.html" data-i18n="footer.staff">Espace du personnel</a></footer>
+    <script src="script.js"></script>
+    <script src="resources.js"></script>
+  </body>
+</html>

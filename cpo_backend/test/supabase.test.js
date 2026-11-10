@@ -106,6 +106,32 @@ test("public publication feed selects and returns the full publication body", as
   }
 });
 
+test("public publication feed supports published course and exercise resources with pagination", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    requestUrl = new URL(input);
+    return new Response(JSON.stringify([{ kind: "exercise", title: "Exercice test", publication_files: [] }]), { status: 200 });
+  };
+  try {
+    const { handled, response } = await call("/api/publications?kind=course,exercise,resource&locale=fr&limit=12&offset=12");
+    assert.equal(handled, true);
+    assert.equal(response.status, 200);
+    assert.equal(response.json().items[0].kind, "exercise");
+    assert.equal(requestUrl.searchParams.get("kind"), "in.(course,exercise,resource)");
+    assert.equal(requestUrl.searchParams.get("limit"), "12");
+    assert.equal(requestUrl.searchParams.get("offset"), "12");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
 test("admin can delete an attachment and its private storage object", async () => {
   const oldEnv = {
     SUPABASE_URL: process.env.SUPABASE_URL,
