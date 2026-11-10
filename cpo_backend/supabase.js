@@ -352,7 +352,7 @@ export async function handleSupabaseRoute(request, response, url) {
       const kinds = requestedKinds.filter((kind) => allowedKinds.includes(kind));
       if (!kinds.length) return sendJson(response, 200, { configured: true, items: [] }), true;
       const limit = Math.max(1, Math.min(Number(searchParams.get("limit")) || 6, 24));
-      const offset = Math.max(0, Math.min(Number(searchParams.get("offset")) || 0, 1000));
+      const offset = Math.max(0, Math.min(Number(searchParams.get("offset")) || 0, 10_000));
       const now = new Date().toISOString();
       const locale = searchParams.get("locale") === "en" ? "en" : "fr";
       const query = new URLSearchParams({
@@ -363,7 +363,7 @@ export async function handleSupabaseRoute(request, response, url) {
         kind: `in.(${kinds.join(",")})`,
         published_at: `lte.${now}`,
         or: `(expires_at.is.null,expires_at.gt.${now})`,
-        order: "is_important.desc,published_at.desc",
+        order: "is_important.desc,published_at.desc,id.desc",
         limit: String(limit),
         offset: String(offset)
       });

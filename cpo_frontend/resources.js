@@ -4,11 +4,14 @@ const list = document.querySelector("[data-resources-list]");
 const loading = document.querySelector("[data-resources-loading]");
 const empty = document.querySelector("[data-resources-empty]");
 const error = document.querySelector("[data-resources-error]");
+const unavailable = document.querySelector("[data-resources-unavailable]");
 const more = document.querySelector("[data-resources-more]");
 const filter = document.querySelector("[data-resource-filter]");
+const clearFilter = document.querySelector("[data-resources-clear-filter]");
 let offset = 0;
 let requestVersion = 0;
 let activeController = null;
+const MAX_OFFSET = 10_000;
 
 function t(key) {
   const language = document.documentElement.lang === "en" ? "en" : "fr";
@@ -72,6 +75,8 @@ async function loadResources({ append = false } = {}) {
     list.replaceChildren();
     empty.hidden = true;
     error.hidden = true;
+    unavailable.hidden = true;
+    clearFilter.hidden = true;
     more.hidden = true;
     loading.hidden = false;
   } else {
@@ -84,13 +89,27 @@ async function loadResources({ append = false } = {}) {
     if (!response.ok) throw new Error("Resources unavailable");
     const payload = await response.json();
     if (version !== requestVersion) return;
+    if (payload.configured === false) {
+      loading.hidden = true;
+      unavailable.hidden = false;
+      return;
+    }
     const items = Array.isArray(payload.items) ? payload.items : [];
     const fragment = document.createDocumentFragment();
     items.forEach((item) => fragment.append(createCard(item)));
     list.append(fragment);
     offset = append ? offset + items.length : items.length;
     empty.hidden = list.childElementCount > 0;
-    more.hidden = items.length < PAGE_SIZE;
+    if (!list.childElementCount && filter.value !== "all") {
+      empty.querySelector("h3").textContent = t("resources.empty.filtered.title");
+      empty.querySelector("p").textContent = t("resources.empty.filtered.copy");
+      clearFilter.hidden = false;
+    } else {
+      empty.querySelector("h3").textContent = t("resources.empty.title");
+      empty.querySelector("p").textContent = t("resources.empty.copy");
+      clearFilter.hidden = true;
+    }
+    more.hidden = items.length < PAGE_SIZE || offset >= MAX_OFFSET;
   } catch {
     if (version !== requestVersion) return;
     if (append && list.childElementCount) {
@@ -111,6 +130,10 @@ async function loadResources({ append = false } = {}) {
 }
 
 filter.addEventListener("change", () => {
+  loadResources();
+});
+clearFilter.addEventListener("click", () => {
+  filter.value = "all";
   loadResources();
 });
 more.addEventListener("click", () => loadResources({ append: true }));
