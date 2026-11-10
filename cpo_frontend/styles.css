@@ -140,6 +140,7 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .resources-error .button-dark { margin-top:8px; }
 .resources-more { display:flex; margin:28px auto 0; }
 .resources-empty[hidden],.resources-error[hidden],.resources-loading[hidden],.resources-more[hidden] { display:none; }
+.resources-clear-filter[hidden] { display:none; }
 .news-file-link,.staff-file-link { border-bottom:1px solid var(--ink); display:inline-block; font-size:11px; font-weight:700; margin:14px 12px 0 0; overflow-wrap:anywhere; padding-bottom:3px; }
 .site-footer .footer-staff-link { border-bottom:1px solid var(--line); font-size:11px; font-weight:700; letter-spacing:.08em; padding-bottom:5px; text-transform:uppercase; }
 
