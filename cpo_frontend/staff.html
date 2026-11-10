@@ -64,7 +64,9 @@
                 <label><span>Rubrique</span><select name="kind"><option value="news">Actualité</option><option value="announcement">Annonce</option><option value="event">Événement</option><option value="course">Cours</option><option value="exercise">Exercice</option><option value="resource">Ressource</option></select></label>
                 <label><span>Langue</span><select name="locale"><option value="fr">Français</option><option value="en">English</option></select></label>
                 <label><span>Catégorie (facultative)</span><input type="text" name="category" maxlength="100" /></label>
+                <label><span>Expire le (facultatif)</span><input type="datetime-local" name="expires_at" data-publication-expiry /></label>
               </div>
+              <p class="staff-form-hint" data-expiry-hint hidden></p>
               <label><span>Résumé</span><textarea name="summary" rows="2" maxlength="600"></textarea></label>
               <label><span>Texte</span><textarea name="body" rows="7" maxlength="50000"></textarea></label>
               <label><span>Pièces jointes (PDF, Word, Excel, JPEG ou PNG · 100 Mo maximum par fichier)</span><input type="file" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" data-publication-files /></label>

@@ -178,6 +178,80 @@ test("public publication pagination stays within server limits", async () => {
   }
 });
 
+test("staff publication creation accepts a valid future expiration", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  let insertedBody;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(input);
+    if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "teacher@example.org" }), { status: 200 });
+    if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "teacher", full_name: "Teacher", is_active: true, must_change_password: false }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publications" && options.method === "POST") {
+      insertedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify([{ id: "55555555-5555-4555-8555-555555555555", ...insertedBody }]), { status: 201 });
+    }
+    throw new Error(`Unexpected mocked request: ${options.method || "GET"} ${url.pathname}`);
+  };
+  try {
+    const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const { response } = await call("/api/staff/publications", {
+      method: "POST",
+      headers: { origin: "http://localhost:8000", cookie: "cpo_access=test-access" },
+      body: JSON.stringify({ title: "Cours test", kind: "course", locale: "fr", status: "published", visibility: "public", expires_at: future })
+    });
+    assert.equal(response.status, 201);
+    assert.equal(insertedBody.expires_at, future);
+    assert.equal(response.json().item.expires_at, future);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
+test("staff publication expiration rejects a date in the past", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  let writes = 0;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(input);
+    if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "teacher@example.org" }), { status: 200 });
+    if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "teacher", full_name: "Teacher", is_active: true, must_change_password: false }]), { status: 200 });
+    throw new Error(`Unexpected mocked request: ${options.method || "GET"} ${url.pathname}`);
+  };
+  try {
+    const { response } = await call("/api/staff/publications", {
+      method: "POST",
+      headers: { origin: "http://localhost:8000", cookie: "cpo_access=test-access" },
+      body: JSON.stringify({ title: "Cours test", kind: "course", locale: "fr", status: "draft", visibility: "public", expires_at: "2020-01-01T00:00:00.000Z" })
+    });
+    assert.equal(response.status, 400);
+    assert.equal(writes, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
 test("admin can delete an attachment and its private storage object", async () => {
   const oldEnv = {
     SUPABASE_URL: process.env.SUPABASE_URL,

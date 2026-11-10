@@ -176,6 +176,7 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .staff-publication-form .staff-check input { accent-color:var(--ink); width:auto; }
 .staff-publication-form .staff-check span { color:var(--ink); }
 .staff-help,.staff-module>p:not(.eyebrow) { color:var(--ink-soft); font-size:13px; line-height:1.6; }
+.staff-form-hint { color:#8f2f28; font-size:12px; line-height:1.5; margin:-8px 0 0; }
 .staff-secondary,.staff-logout { background:transparent; border:1px solid var(--line); cursor:pointer; font-size:10px; font-weight:700; letter-spacing:.06em; padding:10px 12px; text-transform:uppercase; }
 .staff-secondary:hover,.staff-logout:hover { background:var(--paper-strong); }
 .staff-list { border-top:1px solid var(--line); margin-top:24px; }

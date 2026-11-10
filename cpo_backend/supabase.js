@@ -315,7 +315,12 @@ function publicationInput(input, { partial = false } = {}) {
   if (input.is_important !== undefined) output.is_important = input.is_important === true;
   if (input.expires_at !== undefined) {
     output.expires_at = input.expires_at || null;
-    if (output.expires_at && Number.isNaN(Date.parse(output.expires_at))) throw Object.assign(new Error("Date d'expiration invalide."), { status: 400 });
+    if (output.expires_at) {
+      const expiresAt = Date.parse(output.expires_at);
+      if (Number.isNaN(expiresAt) || expiresAt <= Date.now()) {
+        throw Object.assign(new Error("La date d'expiration doit être une date future valide."), { status: 400 });
+      }
+    }
   }
   for (const field of ["class_id", "subject_id"]) {
     if (input[field] !== undefined) {

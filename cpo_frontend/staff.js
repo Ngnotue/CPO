@@ -45,6 +45,20 @@ function dateLabel(value) {
   return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+function toLocalDateTimeValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function localDateTimeToIso(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
 function setAuthenticated(profile) {
   currentProfile = profile;
   loginPanel.hidden = true;
@@ -92,7 +106,7 @@ async function loadPublicationsForStaff() {
       const row = document.createElement("article");
       row.className = "staff-list-row";
       const copy = document.createElement("div");
-      addText(copy, "p", "staff-list-meta", `${item.kind} · ${item.locale.toUpperCase()} · ${item.status} · ${dateLabel(item.published_at || item.updated_at)}`);
+      addText(copy, "p", "staff-list-meta", `${item.kind} · ${item.locale.toUpperCase()} · ${item.status} · ${dateLabel(item.published_at || item.updated_at)}${item.expires_at ? ` · Expire le ${dateLabel(item.expires_at)}` : ""}`);
       addText(copy, "h3", "", item.title);
       addText(copy, "p", "staff-list-summary", item.summary);
       if (item.body?.trim()) addText(copy, "p", "staff-list-body", item.body);
@@ -128,6 +142,8 @@ function editPublication(item) {
   for (const field of ["title", "kind", "locale", "category", "summary", "body", "status", "visibility"]) {
     if (form.elements[field]) form.elements[field].value = item[field] ?? (field === "locale" ? "fr" : "");
   }
+  form.elements.expires_at.value = toLocalDateTimeValue(item.expires_at);
+  validatePublicationExpiry();
   form.elements.is_important.checked = item.is_important === true;
   editingFiles = [...(item.files || [])];
   renderAttachmentList(form.querySelector("[data-publication-files]").files);
@@ -142,8 +158,36 @@ function resetEditor() {
   document.querySelector("[data-publication-form]").elements.id.value = "";
   document.querySelector("[data-attachment-list]").replaceChildren();
   document.querySelector("[data-editor-heading]").textContent = "Nouvelle publication";
+  feedback("[data-expiry-hint]", "");
   feedback("[data-publication-feedback]", "");
 }
+
+function validatePublicationExpiry() {
+  const form = document.querySelector("[data-publication-form]");
+  const input = form.elements.expires_at;
+  const hint = document.querySelector("[data-expiry-hint]");
+  const expiry = input.value ? new Date(input.value) : null;
+  const publishDate = new Date();
+  input.setCustomValidity("");
+  hint.hidden = true;
+  if (form.elements.status.value === "published") {
+    publishDate.setSeconds(0, 0);
+    if (expiry && expiry <= publishDate) {
+      input.setCustomValidity("La date d’expiration doit être future.");
+      hint.textContent = "La date d’expiration doit être postérieure à la date actuelle.";
+      hint.hidden = false;
+    }
+    return;
+  }
+  if (expiry && expiry <= new Date()) {
+    input.setCustomValidity("La date d’expiration doit être future.");
+    hint.textContent = "La date d’expiration doit être postérieure à la date actuelle.";
+    hint.hidden = false;
+  }
+}
+
+document.querySelector('[data-publication-form] [data-publication-expiry]').addEventListener("input", validatePublicationExpiry);
+document.querySelector('[data-publication-form] select[name="status"]').addEventListener("change", validatePublicationExpiry);
 
 async function archivePublication(id) {
   if (!window.confirm("Archiver ce contenu ? Il ne sera plus visible sur le site public.")) return;
@@ -282,6 +326,9 @@ document.querySelector("[data-publication-form]").addEventListener("submit", asy
   delete data.id;
   delete data.files;
   data.is_important = form.elements.is_important.checked;
+  data.expires_at = localDateTimeToIso(form.elements.expires_at.value);
+  validatePublicationExpiry();
+  if (!form.reportValidity()) return;
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
   try {
