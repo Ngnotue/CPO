@@ -5,12 +5,14 @@ const loading = document.querySelector("[data-resources-loading]");
 const empty = document.querySelector("[data-resources-empty]");
 const error = document.querySelector("[data-resources-error]");
 const unavailable = document.querySelector("[data-resources-unavailable]");
+const fallbackNote = document.querySelector("[data-resources-fallback]");
 const more = document.querySelector("[data-resources-more]");
 const filter = document.querySelector("[data-resource-filter]");
 const clearFilter = document.querySelector("[data-resources-clear-filter]");
 let offset = 0;
 let requestVersion = 0;
 let activeController = null;
+let activeContentLocale = null;
 const MAX_OFFSET = 10_000;
 
 function t(key) {
@@ -26,12 +28,12 @@ function formatDate(value) {
   return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(date);
 }
 
-function createCard(item) {
+function createCard(item, fallbackLanguage = false) {
   const card = document.createElement("article");
   card.className = "resource-card";
   const meta = document.createElement("p");
   meta.className = "resource-meta";
-  meta.textContent = `${t(`resources.kind.${item.kind}`)}${item.published_at ? ` · ${formatDate(item.published_at)}` : ""}`;
+  meta.textContent = `${t(`resources.kind.${item.kind}`)}${item.published_at ? ` · ${formatDate(item.published_at)}` : ""}${fallbackLanguage ? ` · ${t("resources.fallbackLabel")}` : ""}`;
   const title = document.createElement("h2");
   title.textContent = item.title || "";
   card.append(meta, title);
@@ -72,10 +74,12 @@ async function loadResources({ append = false } = {}) {
   more.textContent = t("resources.more");
   if (!append) {
     offset = 0;
+    activeContentLocale = null;
     list.replaceChildren();
     empty.hidden = true;
     error.hidden = true;
     unavailable.hidden = true;
+    fallbackNote.hidden = true;
     clearFilter.hidden = true;
     more.hidden = true;
     loading.hidden = false;
@@ -84,19 +88,36 @@ async function loadResources({ append = false } = {}) {
   }
 
   try {
-    const query = new URLSearchParams({ kind: kinds.join(","), locale: language, limit: String(PAGE_SIZE), offset: String(append ? offset : 0) });
-    const response = await fetch(`/api/publications?${query}`, { headers: { Accept: "application/json" }, cache: "no-store", signal: controller.signal });
-    if (!response.ok) throw new Error("Resources unavailable");
-    const payload = await response.json();
+    const fetchPage = async (locale) => {
+      const query = new URLSearchParams({ kind: kinds.join(","), locale, limit: String(PAGE_SIZE), offset: String(append ? offset : 0) });
+      const response = await fetch(`/api/publications?${query}`, { headers: { Accept: "application/json" }, cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("Resources unavailable");
+      return response.json();
+    };
+    let payload = await fetchPage(append && activeContentLocale ? activeContentLocale : language);
     if (version !== requestVersion) return;
     if (payload.configured === false) {
       loading.hidden = true;
       unavailable.hidden = false;
       return;
     }
-    const items = Array.isArray(payload.items) ? payload.items : [];
+    let items = Array.isArray(payload.items) ? payload.items : [];
+    let fallbackLanguage = append && activeContentLocale !== language;
+    if (!append && items.length === 0 && language === "en") {
+      payload = await fetchPage("fr");
+      if (version !== requestVersion) return;
+      if (payload.configured === false) {
+        loading.hidden = true;
+        unavailable.hidden = false;
+        return;
+      }
+      items = Array.isArray(payload.items) ? payload.items : [];
+      fallbackLanguage = items.length > 0;
+      fallbackNote.hidden = !fallbackLanguage;
+    }
+    if (!append) activeContentLocale = fallbackLanguage ? "fr" : language;
     const fragment = document.createDocumentFragment();
-    items.forEach((item) => fragment.append(createCard(item)));
+    items.forEach((item) => fragment.append(createCard(item, fallbackLanguage)));
     list.append(fragment);
     offset = append ? offset + items.length : items.length;
     empty.hidden = list.childElementCount > 0;
@@ -116,6 +137,7 @@ async function loadResources({ append = false } = {}) {
       more.hidden = false;
       more.textContent = t("resources.retry");
     } else {
+      fallbackNote.hidden = true;
       error.hidden = false;
     }
   } finally {

@@ -133,6 +133,28 @@ test("public publication feed supports published course and exercise resources w
   }
 });
 
+test("public publication pagination has a stable unique tie-breaker", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    requestUrl = new URL(input);
+    return new Response("[]", { status: 200 });
+  };
+  try {
+    const { response } = await call("/api/publications?kind=resource&locale=fr&limit=12&offset=0");
+    assert.equal(response.status, 200);
+    assert.equal(requestUrl.searchParams.get("order"), "is_important.desc,published_at.desc,id.desc");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
 test("public publication pagination stays within server limits", async () => {
   const oldUrl = process.env.SUPABASE_URL;
   const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
