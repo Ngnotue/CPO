@@ -175,7 +175,8 @@ nominatifs.
   expirées pour leur donner une nouvelle date ou retirer leur expiration.
 - `cpo_frontend/resources.html` présente au public les cours, exercices et
   documents que le personnel a explicitement publiés avec une visibilité
-  publique; les visiteurs peuvent filtrer par type et ouvrir les pièces jointes.
+  publique; les visiteurs peuvent rechercher par mot-clé, filtrer par type et
+  ouvrir les pièces jointes.
 - Le navigateur ne reçoit jamais la clé Supabase secrète. Les actions passent
   par le backend Node et les accès SQL sont protégés par Row Level Security
   (RLS).

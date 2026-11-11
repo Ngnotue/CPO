@@ -8,11 +8,13 @@ const unavailable = document.querySelector("[data-resources-unavailable]");
 const fallbackNote = document.querySelector("[data-resources-fallback]");
 const more = document.querySelector("[data-resources-more]");
 const filter = document.querySelector("[data-resource-filter]");
+const searchInput = document.querySelector("[data-resource-search]");
 const clearFilter = document.querySelector("[data-resources-clear-filter]");
 let offset = 0;
 let requestVersion = 0;
 let activeController = null;
 let activeContentLocale = null;
+let searchTimer = null;
 const MAX_OFFSET = 10_000;
 
 function t(key) {
@@ -71,6 +73,7 @@ async function loadResources({ append = false } = {}) {
   const version = ++requestVersion;
   const language = document.documentElement.lang === "en" ? "en" : "fr";
   const kinds = filter.value === "all" ? RESOURCE_KINDS : [filter.value];
+  const search = searchInput.value.trim();
   more.textContent = t("resources.more");
   if (!append) {
     offset = 0;
@@ -90,6 +93,7 @@ async function loadResources({ append = false } = {}) {
   try {
     const fetchPage = async (locale) => {
       const query = new URLSearchParams({ kind: kinds.join(","), locale, limit: String(PAGE_SIZE), offset: String(append ? offset : 0) });
+      if (search) query.set("q", search);
       const response = await fetch(`/api/publications?${query}`, { headers: { Accept: "application/json" }, cache: "no-store", signal: controller.signal });
       if (!response.ok) throw new Error("Resources unavailable");
       return response.json();
@@ -121,7 +125,7 @@ async function loadResources({ append = false } = {}) {
     list.append(fragment);
     offset = append ? offset + items.length : items.length;
     empty.hidden = list.childElementCount > 0;
-    if (!list.childElementCount && filter.value !== "all") {
+    if (!list.childElementCount && (filter.value !== "all" || searchInput.value.trim())) {
       empty.querySelector("h3").textContent = t("resources.empty.filtered.title");
       empty.querySelector("p").textContent = t("resources.empty.filtered.copy");
       clearFilter.hidden = false;
@@ -152,13 +156,29 @@ async function loadResources({ append = false } = {}) {
 }
 
 filter.addEventListener("change", () => {
+  clearTimeout(searchTimer);
+  loadResources();
+});
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  more.hidden = true;
+  searchTimer = setTimeout(() => loadResources(), 300);
+});
+searchInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  clearTimeout(searchTimer);
   loadResources();
 });
 clearFilter.addEventListener("click", () => {
   filter.value = "all";
+  searchInput.value = "";
+  clearTimeout(searchTimer);
   loadResources();
 });
 more.addEventListener("click", () => loadResources({ append: true }));
 document.querySelector("[data-resources-retry]").addEventListener("click", () => loadResources());
-document.querySelector("[data-language-toggle]")?.addEventListener("click", () => loadResources());
+document.querySelector("[data-language-toggle]")?.addEventListener("click", () => {
+  clearTimeout(searchTimer);
+  loadResources();
+});
 loadResources();

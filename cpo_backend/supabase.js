@@ -360,6 +360,10 @@ export async function handleSupabaseRoute(request, response, url) {
       const offset = Math.max(0, Math.min(Number(searchParams.get("offset")) || 0, 10_000));
       const now = new Date().toISOString();
       const locale = searchParams.get("locale") === "en" ? "en" : "fr";
+      const search = (searchParams.get("q") || "").trim();
+      if (Array.from(search).length > 120 || /[\u0000-\u001f\u007f]/.test(search)) {
+        throw Object.assign(new Error("La recherche doit contenir au maximum 120 caractères."), { status: 400 });
+      }
       const query = new URLSearchParams({
         select: "id,kind,title,slug,summary,body,category,locale,is_important,published_at,expires_at,publication_files(id,original_name,content_type,object_path,bucket_id)",
         status: "eq.published",
@@ -372,6 +376,12 @@ export async function handleSupabaseRoute(request, response, url) {
         limit: String(limit),
         offset: String(offset)
       });
+      if (search) {
+        const escaped = search.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replace(/[%_*]/g, "\\$&");
+        const pattern = `"*${escaped}*"`;
+        query.delete("or");
+        query.set("and", `(or(title.ilike.${pattern},summary.ilike.${pattern},body.ilike.${pattern}),or(expires_at.is.null,expires_at.gt.${now}))`);
+      }
       const items = await postgrest(`publications?${query.toString()}`);
       for (const item of items || []) {
         const files = item.publication_files || [];

@@ -133,6 +133,65 @@ test("public publication feed supports published course and exercise resources w
   }
 });
 
+test("public publication search safely matches text and preserves expiry filtering", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    requestUrl = new URL(input);
+    return new Response("[]", { status: 200 });
+  };
+  try {
+    const search = 'math, (chapitre)_%* "A"';
+    const { response } = await call(`/api/publications?kind=course&locale=fr&q=${encodeURIComponent(search)}`);
+    assert.equal(response.status, 200);
+    const filters = requestUrl.searchParams.get("and");
+    assert.ok(filters.includes('math, (chapitre)\\_\\%\\* \\"A\\"'));
+    assert.match(filters, /summary\.ilike\./);
+    assert.match(filters, /body\.ilike\./);
+    assert.match(filters, /or\(expires_at\.is\.null,expires_at\.gt\./);
+    assert.equal(requestUrl.searchParams.has("or"), false);
+    assert.equal(requestUrl.searchParams.get("kind"), "in.(course)");
+    assert.equal(requestUrl.searchParams.get("locale"), "eq.fr");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
+test("public publication search ignores whitespace and rejects overlong terms", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  let fetchCalls = 0;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    fetchCalls += 1;
+    requestUrl = new URL(input);
+    return new Response("[]", { status: 200 });
+  };
+  try {
+    const whitespace = await call("/api/publications?locale=fr&q=%20%20%20");
+    assert.equal(whitespace.response.status, 200);
+    assert.equal(requestUrl.searchParams.has("or"), true);
+    assert.equal(requestUrl.searchParams.has("and"), false);
+    const callsBeforeInvalid = fetchCalls;
+    const invalid = await call(`/api/publications?locale=fr&q=${"a".repeat(121)}`);
+    assert.equal(invalid.response.status, 400);
+    assert.equal(fetchCalls, callsBeforeInvalid);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
 test("public publication pagination has a stable unique tie-breaker", async () => {
   const oldUrl = process.env.SUPABASE_URL;
   const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;

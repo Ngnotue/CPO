@@ -127,7 +127,8 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .resources-section { margin:0 auto; max-width:1440px; min-height:420px; }
 .resources-toolbar { align-items:center; display:flex; flex-wrap:wrap; gap:14px; justify-content:flex-end; margin:0 auto 34px; max-width:1200px; }
 .resources-toolbar label { color:var(--ink-soft); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-.resources-toolbar select { background:var(--white); border:1px solid var(--line); color:var(--ink); font:inherit; min-width:190px; padding:10px 12px; }
+.resources-toolbar select,.resources-toolbar input { background:var(--white); border:1px solid var(--line); color:var(--ink); font:inherit; min-width:190px; padding:10px 12px; }
+.resources-toolbar input { font-size:16px; min-width:min(280px,100%); }
 .resources-grid { display:grid; gap:34px 28px; grid-template-columns:repeat(2,minmax(0,1fr)); margin:0 auto; max-width:1200px; }
 .resource-card { border-top:2px solid var(--ink); min-width:0; padding:22px 0 30px; }
 .resource-meta { color:var(--ink-soft); font-size:11px; font-weight:700; letter-spacing:.09em; margin:0 0 12px; text-transform:uppercase; }
@@ -202,4 +203,4 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .is-error { color:#9d342a!important; }
 @media(max-width:850px) { .staff-main { padding:60px 6vw 80px; } .staff-dashboard { grid-template-columns:1fr; } }
 @media(max-width:520px) { .staff-field-grid { grid-template-columns:1fr; } .staff-welcome,.staff-module-heading { align-items:flex-start; flex-direction:column; } .staff-list-row { align-items:flex-start; flex-direction:column; } .staff-list-actions { flex-wrap:wrap; } }
-@media(max-width:700px) { .resources-grid { grid-template-columns:1fr; } .resources-toolbar { align-items:stretch; flex-direction:column; } .resources-toolbar select { width:100%; } }
+@media(max-width:700px) { .resources-grid { grid-template-columns:1fr; } .resources-toolbar { align-items:stretch; flex-direction:column; } .resources-toolbar select,.resources-toolbar input { width:100%; } }
