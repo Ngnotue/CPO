@@ -10,7 +10,7 @@ Site institutionnel du Collège Privé de l'Ouest, collège d'enseignement gén�
 - Proposer une navigation simple vers les sections collège, parcours, admissions et contact.
 - Valoriser l'espace familles et les parcours d'accompagnement.
 - Présenter un parcours d'admission en plusieurs étapes.
-- Ajouter automatiquement l'objet adéquat pour les demandes d'admission ou le suivi d'un dossier.
+- Préselectionner le motif du formulaire pour les demandes d'admission ou le suivi d'un dossier, et transmettre un objet lisible à l'équipe.
 - Afficher le français par défaut et permettre la version anglaise.
 - Gérer le thème clair/sombre avec mémorisation dans le navigateur.
 - Maintenir une palette institutionnelle basée sur le bleu, le bleu marine et l'ivoire.

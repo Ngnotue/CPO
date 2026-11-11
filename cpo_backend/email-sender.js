@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { formatContactSubject } from "../cpo_frontend/contact-subject.js";
 
 const BREVO_EMAIL_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_CONTACT_RECIPIENT = "nnoguem@gmail.com";
@@ -19,11 +20,12 @@ function makeError(message, code, status = 502) {
 }
 
 function buildMessage({ name, email, subject, message }, recipient) {
-  const cleanSubject = subject?.trim() || "Question générale";
+  const cleanSubject = formatContactSubject(subject);
+  const cleanName = name.replace(/[\r\n]+/g, " ").trim();
   return {
     recipient,
-    subject: `CPO - ${cleanSubject} - ${name}`,
-    text: `Nom : ${name}\nE-mail : ${email}\nObjet : ${cleanSubject}\n\n${message}`
+    subject: `CPO - ${cleanSubject} - ${cleanName}`,
+    text: `Nom : ${cleanName}\nE-mail : ${email}\nObjet : ${cleanSubject}\n\n${message}`
   };
 }
 

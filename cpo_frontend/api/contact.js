@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import "dotenv/config";
+import { formatContactSubject } from "../contact-subject.js";
 
 function sendJson(res, statusCode, payload) {
   res.status(statusCode).json(payload);
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
     const cleanName = String(name || "").trim();
     const cleanEmail = String(email || "").trim();
     const cleanMessage = String(message || "").trim();
+    const cleanSubject = formatContactSubject(subject);
 
     if (!cleanName || !cleanEmail || !cleanMessage) {
       return sendJson(res, 400, { error: "Tous les champs sont obligatoires." });
@@ -62,8 +64,8 @@ export default async function handler(req, res) {
       from: SMTP_USER,
       to: process.env.CONTACT_RECIPIENT || "nnoguem@gmail.com",
       replyTo: cleanEmail,
-      subject: `CPO - ${subject || "Question générale"} - ${cleanName}`,
-      text: `Nom : ${cleanName}\nE-mail : ${cleanEmail}\nObjet : ${subject || "Question générale"}\n\n${cleanMessage}`
+      subject: `CPO - ${cleanSubject} - ${cleanName.replace(/[\r\n]+/g, " ")}`,
+      text: `Nom : ${cleanName}\nE-mail : ${cleanEmail}\nObjet : ${cleanSubject}\n\n${cleanMessage}`
     });
 
     return sendJson(res, 200, { message: "Message envoyé avec succès." });

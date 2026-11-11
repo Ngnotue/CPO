@@ -45,6 +45,30 @@ test("Brevo API receives the message with verified sender and reply-to", async (
   assert.deepEqual(payload.to, [{ email: "office@cpo.example" }]);
   assert.deepEqual(payload.replyTo, { email: contact.email });
   assert.equal(payload.textContent.includes(contact.message), true);
+  assert.equal(payload.subject, "CPO - Question générale - Parent Example");
+  assert.match(payload.textContent, /Objet : Question générale/);
+});
+
+test("contact email maps every supported contact intent to a safe readable label", async () => {
+  const expected = new Map([
+    ["general", "Question générale"],
+    ["application", "Demande d'admission"],
+    ["follow-up", "Suivi de dossier"],
+    ["unknown\r\nBcc: injected@example.com", "Question générale"]
+  ]);
+  for (const [intent, label] of expected) {
+    let payload;
+    await sendContactEmail({ ...contact, subject: intent, name: "Parent\nInjected" }, {
+      env: { BREVO_API_KEY: "test-key", BREVO_SENDER_EMAIL: "verified@cpo.example" },
+      fetchImpl: async (_url, options) => {
+        payload = JSON.parse(options.body);
+        return new Response("{}", { status: 201 });
+      }
+    });
+    assert.equal(payload.subject, `CPO - ${label} - Parent Injected`);
+    assert.match(payload.textContent, new RegExp(`Objet : ${label}`));
+    assert.equal(payload.subject.includes("Bcc:"), false);
+  }
 });
 
 test("Brevo requires a verified sender address", async () => {
