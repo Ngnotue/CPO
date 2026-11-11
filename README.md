@@ -167,7 +167,8 @@ nominatifs.
 ### Ce qui est déjà prévu dans le code
 
 - `GET /api/publications` renvoie uniquement les actualités publiques publiées,
-  non expirées, dans la langue demandée (`fr` ou `en`).
+  non expirées, dans la langue demandée (`fr` ou `en`). La page d'accueil en
+  affiche six à la fois et permet de charger les précédentes.
 - `/staff.html` fournit une connexion, le changement obligatoire du mot de
   passe temporaire, la gestion des publications et, pour l'administrateur, la
   création/suspension de comptes professeurs et l'enregistrement privé de

@@ -124,6 +124,8 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .news-entry>p:last-child { color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0; }
 .news-entry>p.news-entry-body { color:var(--ink-soft); font-size:14px; line-height:1.7; margin:14px 0 0; overflow-wrap:anywhere; white-space:pre-line; }
 .news-entry--important { border-color:#a14a36; }
+.news-more { display:flex; margin:28px auto 0; }
+.news-more[hidden] { display:none; }
 .resources-section { margin:0 auto; max-width:1440px; min-height:420px; }
 .resources-toolbar { align-items:center; display:flex; flex-wrap:wrap; gap:14px; justify-content:flex-end; margin:0 auto 34px; max-width:1200px; }
 .resources-toolbar label { color:var(--ink-soft); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }

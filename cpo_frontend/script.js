@@ -38,6 +38,9 @@ const translations = {
 };
 
 Object.assign(translations.fr, {
+  "news.more": "Voir les actualités précédentes",
+  "news.loadingMore": "Chargement…",
+  "news.retryMore": "Réessayer",
   "resources.search.label": "Rechercher dans les ressources",
   "resources.search.placeholder": "Titre, catégorie ou mot-clé",
   "resources.empty.filtered.title": "Aucune ressource ne correspond à ces critères.",
@@ -45,6 +48,9 @@ Object.assign(translations.fr, {
   "resources.empty.reset": "Effacer la recherche et les filtres"
 });
 Object.assign(translations.en, {
+  "news.more": "Load earlier news",
+  "news.loadingMore": "Loading…",
+  "news.retryMore": "Try again",
   "resources.search.label": "Search resources",
   "resources.search.placeholder": "Title, category or keyword",
   "resources.empty.filtered.title": "No resources match these criteria.",
@@ -94,69 +100,112 @@ function savePreference(key, value) {
 let currentLanguage = readPreference("cpo-language", ["fr", "en"], "fr");
 let currentTheme = readPreference("cpo-theme", ["light", "dark"], "light");
 
+const NEWS_PAGE_SIZE = 6;
+const NEWS_MAX_OFFSET = 10_000;
 let publicationRequestVersion = 0;
+let publicationOffset = 0;
+let publicationController = null;
 
-async function loadPublications(language = currentLanguage) {
+function renderNewsEntry(item, language) {
+  const article = document.createElement("article");
+  article.className = `news-entry${item.is_important ? " news-entry--important" : ""}`;
+  const formatter = new Intl.DateTimeFormat(language === "en" ? "en-GB" : "fr-FR", { dateStyle: "long" });
+  const meta = document.createElement("p");
+  meta.className = "news-entry-meta";
+  meta.textContent = `${translations[language][`news.kind.${item.kind}`] || translations[language]["news.kind.news"]} · ${item.published_at ? formatter.format(new Date(item.published_at)) : ""}`;
+  const title = document.createElement("h3");
+  title.textContent = item.title || "";
+  const summary = document.createElement("p");
+  summary.textContent = item.summary || "";
+  article.append(meta, title, summary);
+  if (item.body?.trim()) {
+    const body = document.createElement("p");
+    body.className = "news-entry-body";
+    body.textContent = item.body;
+    article.append(body);
+  }
+  for (const file of item.files || []) {
+    if (!file.url) continue;
+    const link = document.createElement("a");
+    link.className = "news-file-link";
+    link.href = file.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.append(document.createTextNode(`${file.name || "Document"} ↗`));
+    const details = document.createElement("small");
+    details.className = "attachment-details";
+    details.textContent = window.CPO_ATTACHMENT_DETAILS(file, language);
+    link.append(details);
+    article.append(link);
+  }
+  return article;
+}
+
+async function loadPublications(language = currentLanguage, { append = false } = {}) {
   const feed = document.querySelector("[data-news-feed]");
   const emptyState = document.querySelector("[data-news-empty]");
   const errorState = document.querySelector("[data-news-error]");
-  if (!feed || !emptyState || !errorState) return;
+  const more = document.querySelector("[data-news-more]");
+  if (!feed || !emptyState || !errorState || !more) return;
+  publicationController?.abort();
+  const controller = new AbortController();
+  publicationController = controller;
+  const timeout = setTimeout(() => controller.abort(), 12_000);
   const requestVersion = ++publicationRequestVersion;
+  feed.setAttribute("aria-busy", "true");
+  if (append) {
+    more.disabled = true;
+    more.textContent = translations[language]["news.loadingMore"];
+  } else {
+    publicationOffset = 0;
+    feed.replaceChildren();
+    feed.setAttribute("aria-busy", "true");
+    emptyState.hidden = true;
+    errorState.hidden = true;
+    more.hidden = true;
+    more.textContent = translations[language]["news.more"];
+  }
   try {
-    const response = await fetch(`/api/publications?kind=news,announcement,event&locale=${encodeURIComponent(language)}&limit=6`, { headers: { Accept: "application/json" }, cache: "no-store", signal: AbortSignal.timeout(12_000) });
+    const query = new URLSearchParams({ kind: "news,announcement,event", locale: language, limit: String(NEWS_PAGE_SIZE + 1), offset: String(append ? publicationOffset : 0) });
+    const response = await fetch(`/api/publications?${query}`, { headers: { Accept: "application/json" }, cache: "no-store", signal: controller.signal });
     if (!response.ok) throw new Error("Publications unavailable");
     const { items = [] } = await response.json();
+    if (requestVersion !== publicationRequestVersion) return;
     if (!Array.isArray(items) || items.length === 0) {
-      if (requestVersion !== publicationRequestVersion) return;
-      feed.replaceChildren();
+      more.hidden = true;
+      if (!append) {
+        feed.replaceChildren();
+        emptyState.hidden = false;
+      }
       errorState.hidden = true;
-      emptyState.hidden = false;
       return;
     }
-    const formatter = new Intl.DateTimeFormat(language === "en" ? "en-GB" : "fr-FR", { dateStyle: "long" });
     const fragment = document.createDocumentFragment();
-    for (const item of items) {
-      const article = document.createElement("article");
-      article.className = `news-entry${item.is_important ? " news-entry--important" : ""}`;
-      const meta = document.createElement("p");
-      meta.className = "news-entry-meta";
-      meta.textContent = `${translations[language][`news.kind.${item.kind}`] || translations[language]["news.kind.news"]} · ${item.published_at ? formatter.format(new Date(item.published_at)) : ""}`;
-      const title = document.createElement("h3");
-      title.textContent = item.title || "";
-      const summary = document.createElement("p");
-      summary.textContent = item.summary || "";
-      article.append(meta, title, summary);
-      if (item.body?.trim()) {
-        const body = document.createElement("p");
-        body.className = "news-entry-body";
-        body.textContent = item.body;
-        article.append(body);
-      }
-      for (const file of item.files || []) {
-        if (!file.url) continue;
-        const link = document.createElement("a");
-        link.className = "news-file-link";
-        link.href = file.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.append(document.createTextNode(`${file.name || "Document"} ↗`));
-        const details = document.createElement("small");
-        details.className = "attachment-details";
-        details.textContent = window.CPO_ATTACHMENT_DETAILS(file, language);
-        link.append(details);
-        article.append(link);
-      }
-      fragment.append(article);
-    }
-    if (requestVersion !== publicationRequestVersion) return;
-    feed.replaceChildren(fragment);
+    items.slice(0, NEWS_PAGE_SIZE).forEach((item) => fragment.append(renderNewsEntry(item, language)));
+    feed.append(fragment);
+    publicationOffset += Math.min(items.length, NEWS_PAGE_SIZE);
+    more.hidden = items.length <= NEWS_PAGE_SIZE || publicationOffset >= NEWS_MAX_OFFSET;
+    more.textContent = translations[language]["news.more"];
     emptyState.hidden = true;
     errorState.hidden = true;
   } catch {
     if (requestVersion !== publicationRequestVersion) return;
-    feed.replaceChildren();
-    emptyState.hidden = true;
-    errorState.hidden = false;
+    if (append && feed.childElementCount) {
+      more.hidden = false;
+      more.textContent = translations[language]["news.retryMore"];
+    } else {
+      feed.replaceChildren();
+      emptyState.hidden = true;
+      more.hidden = true;
+      errorState.hidden = false;
+    }
+  } finally {
+    clearTimeout(timeout);
+    if (requestVersion === publicationRequestVersion) {
+      feed.setAttribute("aria-busy", "false");
+      more.disabled = false;
+      publicationController = null;
+    }
   }
 }
 
@@ -291,3 +340,4 @@ contactForm.addEventListener("submit", async (event) => {
 }
 
 document.querySelector("[data-news-retry]")?.addEventListener("click", () => loadPublications(currentLanguage));
+document.querySelector("[data-news-more]")?.addEventListener("click", () => loadPublications(currentLanguage, { append: true }));

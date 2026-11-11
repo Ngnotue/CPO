@@ -67,7 +67,8 @@
           </div>
           <button class="text-link news-retry" type="button" data-news-retry><span data-i18n="news.error.retry">Réessayer</span><span aria-hidden="true">↻</span></button>
         </div>
-        <div class="news-feed" data-news-feed aria-live="polite"></div>
+        <div class="news-feed" id="news-feed" data-news-feed aria-live="polite" aria-busy="false"></div>
+        <button class="text-link news-more" type="button" data-news-more aria-controls="news-feed" aria-live="polite" hidden data-i18n="news.more">Voir les actualités précédentes</button>
       </section>
 
       <section class="intro-section section-pad" id="college">

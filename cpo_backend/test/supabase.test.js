@@ -287,6 +287,36 @@ test("public publication pagination stays within server limits", async () => {
   }
 });
 
+test("public news feed supports later pages without weakening visibility filters", async () => {
+  const oldUrl = process.env.SUPABASE_URL;
+  const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let requestUrl;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  globalThis.fetch = async (input) => {
+    requestUrl = new URL(input);
+    return new Response("[]", { status: 200 });
+  };
+  try {
+    const { response } = await call("/api/publications?kind=news,announcement,event&locale=en&limit=7&offset=6");
+    assert.equal(response.status, 200);
+    assert.equal(requestUrl.searchParams.get("kind"), "in.(news,announcement,event)");
+    assert.equal(requestUrl.searchParams.get("locale"), "eq.en");
+    assert.equal(requestUrl.searchParams.get("limit"), "7");
+    assert.equal(requestUrl.searchParams.get("offset"), "6");
+    assert.equal(requestUrl.searchParams.get("status"), "eq.published");
+    assert.equal(requestUrl.searchParams.get("visibility"), "eq.public");
+    assert.match(requestUrl.searchParams.get("published_at"), /^lte\./);
+    assert.match(requestUrl.searchParams.get("or"), /^\(expires_at\.is\.null,expires_at\.gt\./);
+    assert.equal(requestUrl.searchParams.get("order"), "is_important.desc,published_at.desc,id.desc");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
+    if (oldPublishable === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY; else process.env.SUPABASE_PUBLISHABLE_KEY = oldPublishable;
+  }
+});
+
 test("staff publication creation accepts a valid future expiration", async () => {
   const oldEnv = {
     SUPABASE_URL: process.env.SUPABASE_URL,
