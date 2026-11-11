@@ -97,7 +97,8 @@ async function loadPublicationsForStaff() {
   const list = document.querySelector("[data-publication-list]");
   list.replaceChildren();
   try {
-    const { items = [] } = await request("/api/staff/publications");
+    const state = document.querySelector("[data-publication-state]")?.value || "all";
+    const { items = [] } = await request(`/api/staff/publications?state=${encodeURIComponent(state)}`);
     if (!items.length) {
       addText(list, "p", "staff-list-empty", "Aucun contenu pour l'instant.");
       return;
@@ -108,6 +109,8 @@ async function loadPublicationsForStaff() {
       const copy = document.createElement("div");
       addText(copy, "p", "staff-list-meta", `${item.kind} · ${item.locale.toUpperCase()} · ${item.status} · ${dateLabel(item.published_at || item.updated_at)}${item.expires_at ? ` · Expire le ${dateLabel(item.expires_at)}` : ""}`);
       addText(copy, "h3", "", item.title);
+      const isExpired = item.status === "published" && item.expires_at && new Date(item.expires_at) <= new Date();
+      if (isExpired) addText(copy, "p", "staff-expired-badge", "Expirée · non visible sur le site public");
       addText(copy, "p", "staff-list-summary", item.summary);
       if (item.body?.trim()) addText(copy, "p", "staff-list-body", item.body);
       for (const file of item.files || []) {
@@ -122,6 +125,17 @@ async function loadPublicationsForStaff() {
       const edit = addText(actions, "button", "staff-secondary", "Modifier");
       edit.type = "button";
       edit.addEventListener("click", () => editPublication(item));
+      if (isExpired) {
+        const renew = addText(actions, "button", "staff-secondary", "Renouveler");
+        renew.type = "button";
+        renew.addEventListener("click", () => {
+          editPublication(item);
+          const form = document.querySelector("[data-publication-form]");
+          form.elements.expires_at.value = "";
+          validatePublicationExpiry();
+          feedback("[data-publication-feedback]", "Choisissez une nouvelle date future, ou laissez le champ vide pour ne pas définir d’expiration.");
+        });
+      }
       if (item.status !== "archived") {
         const archive = addText(actions, "button", "staff-secondary", "Archiver");
         archive.type = "button";
@@ -298,6 +312,7 @@ document.querySelector("[data-logout]").addEventListener("click", async () => {
   try { await request("/api/staff/logout", { method: "POST", body: "{}" }); } finally { window.location.reload(); }
 });
 document.querySelector("[data-reset-editor]").addEventListener("click", resetEditor);
+document.querySelector("[data-publication-state]").addEventListener("change", loadPublicationsForStaff);
 
 function safeUploadName(value) {
   return String(value || "fichier").split(/[\\/]/).pop().replace(/[\u0000-\u001f]/g, "").trim();

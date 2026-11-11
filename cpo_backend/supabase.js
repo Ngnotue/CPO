@@ -448,7 +448,16 @@ export async function handleSupabaseRoute(request, response, url) {
     if (pathname === "/api/staff/publications" && method === "GET") {
       const identity = await authenticatedStaff(request, response);
       if (!identity) return true;
+      const state = searchParams.get("state") || "all";
+      if (!["all", "drafts", "expired"].includes(state)) {
+        throw Object.assign(new Error("Filtre de publication invalide."), { status: 400 });
+      }
       const query = new URLSearchParams({ select: "id,author_id,kind,status,visibility,locale,title,slug,summary,body,category,class_id,subject_id,is_important,published_at,expires_at,created_at,updated_at,publication_files(id,original_name,content_type,object_path,bucket_id,is_public)", order: "updated_at.desc", limit: "100" });
+      if (state === "drafts") query.set("status", "eq.draft");
+      if (state === "expired") {
+        query.set("status", "eq.published");
+        query.set("and", `(expires_at.not.is.null,expires_at.lte.${new Date().toISOString()})`);
+      }
       const items = await postgrest(`publications?${query.toString()}`, { accessToken: identity.accessToken });
       for (const item of items || []) {
         const files = item.publication_files || [];

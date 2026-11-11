@@ -252,6 +252,48 @@ test("staff publication expiration rejects a date in the past", async () => {
   }
 });
 
+test("staff publication list filters drafts and expired items on the server", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const listQueries = [];
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "teacher@example.org" }), { status: 200 });
+    if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "teacher", full_name: "Teacher", is_active: true, must_change_password: false }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publications") {
+      listQueries.push(url.searchParams);
+      return new Response(JSON.stringify([]), { status: 200 });
+    }
+    throw new Error(`Unexpected mocked request: ${url.pathname}`);
+  };
+  try {
+    const headers = { cookie: "cpo_access=test-access" };
+    const drafts = await call("/api/staff/publications?state=drafts", { headers });
+    const expired = await call("/api/staff/publications?state=expired", { headers });
+    const invalid = await call("/api/staff/publications?state=unknown", { headers });
+
+    assert.equal(drafts.response.status, 200);
+    assert.equal(listQueries[0].get("status"), "eq.draft");
+    assert.equal(expired.response.status, 200);
+    assert.equal(listQueries[1].get("status"), "eq.published");
+    assert.match(listQueries[1].get("and"), /^\(expires_at\.not\.is\.null,expires_at\.lte\./);
+    assert.equal(invalid.response.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
 test("admin can delete an attachment and its private storage object", async () => {
   const oldEnv = {
     SUPABASE_URL: process.env.SUPABASE_URL,

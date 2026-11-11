@@ -164,6 +164,9 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .staff-module { margin:0; min-width:0; }
 .staff-module-heading { margin-bottom:25px; }
 .staff-module-heading h2 { margin:0; }
+.staff-list-filter { align-items:center; display:flex; flex-wrap:wrap; gap:9px; }
+.staff-list-filter>span { color:var(--ink-soft); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.staff-list-filter select { background:var(--paper); border:1px solid var(--line); color:var(--ink); font:inherit; max-width:100%; padding:8px 10px; }
 .staff-publication-form,.staff-form { display:grid; gap:19px; }
 .staff-publication-form label,.staff-form label { border-bottom:1px solid var(--line); display:grid; gap:7px; padding-bottom:9px; }
 .staff-publication-form label>span,.staff-form label>span { color:var(--ink-soft); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
@@ -185,6 +188,7 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .staff-list-meta,.staff-list-summary,.staff-list-empty { color:var(--ink-soft); font-size:12px; line-height:1.5; margin:0 0 5px; }
 .staff-list-summary { max-width:55ch; }
 .staff-list-body { color:var(--ink-soft); font-size:12px; line-height:1.55; margin:8px 0 0; max-width:65ch; overflow-wrap:anywhere; white-space:pre-line; }
+.staff-expired-badge { color:#8f2f28; font-size:11px; font-weight:700; margin:4px 0; }
 .staff-file-current { color:var(--ink-soft); font-size:12px; margin:0; overflow-wrap:anywhere; }
 .staff-attachment-row { align-items:center; display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; padding:7px 0; }
 .staff-attachment-remove { color:#8f2f28; }
