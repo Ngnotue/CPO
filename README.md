@@ -114,7 +114,9 @@ résultats nominatifs et journal d'audit.
 - Les résultats contenant le nom d'un élève sont stockés séparément et réservés
   aux administrateurs. Ils ne sont jamais renvoyés au flux public.
 - Les pièces jointes sont envoyées vers un bucket privé avec des URL signées;
-  les clés Supabase privilégiées restent uniquement sur le backend.
+  les clés Supabase privilégiées restent uniquement sur le backend. Si un
+  envoi partiel échoue, l'éditeur conserve la publication et permet de reprendre
+  sans renvoyer les fichiers déjà finalisés.
 - Le backend limite les connexions répétées pour un même identifiant et limite
   les demandes de contact répétées depuis une même adresse e-mail. Ces limites
   sont conservées en mémoire du processus et complètent, sans remplacer, les

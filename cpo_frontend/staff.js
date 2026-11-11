@@ -1,3 +1,5 @@
+import { uploadPublicationFiles } from "./publication-upload.js";
+
 const loginPanel = document.querySelector("[data-login-panel]");
 const workspace = document.querySelector("[data-staff-workspace]");
 const dashboard = document.querySelector("[data-dashboard]");
@@ -7,6 +9,7 @@ const staffNotice = document.querySelector("[data-staff-notice]");
 let currentProfile = null;
 let editingPublicationId = "";
 let editingFiles = [];
+let completedUploadFiles = new WeakSet();
 let publicationOffset = 0;
 let publicationListVersion = 0;
 const STAFF_PUBLICATION_PAGE_SIZE = 50;
@@ -179,6 +182,7 @@ async function loadPublicationsForStaff({ append = false } = {}) {
 function editPublication(item) {
   const form = document.querySelector("[data-publication-form]");
   editingPublicationId = item.id;
+  completedUploadFiles = new WeakSet();
   form.elements.id.value = item.id;
   for (const field of ["title", "kind", "locale", "category", "summary", "body", "status", "visibility"]) {
     if (form.elements[field]) form.elements[field].value = item[field] ?? (field === "locale" ? "fr" : "");
@@ -195,6 +199,7 @@ function editPublication(item) {
 function resetEditor() {
   editingPublicationId = "";
   editingFiles = [];
+  completedUploadFiles = new WeakSet();
   document.querySelector("[data-publication-form]").reset();
   document.querySelector("[data-publication-form]").elements.id.value = "";
   document.querySelector("[data-attachment-list]").replaceChildren();
@@ -357,20 +362,6 @@ function safeUploadName(value) {
   return String(value || "fichier").split(/[\\/]/).pop().replace(/[\u0000-\u001f]/g, "").trim();
 }
 
-async function uploadPublicationFiles(publicationId, files) {
-  const allowed = new Set(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "image/jpeg", "image/png"]);
-  for (const file of files) {
-    if (!allowed.has(file.type) || file.size < 1 || file.size > 100 * 1024 * 1024) {
-      throw new Error(`Format ou taille non autorisé : ${safeUploadName(file.name)}`);
-    }
-    const metadata = { publication_id: publicationId, original_name: safeUploadName(file.name), content_type: file.type, size_bytes: file.size };
-    const signed = await request("/api/staff/uploads/sign", { method: "POST", body: JSON.stringify(metadata) });
-    const uploaded = await fetch(signed.upload_url, { method: "PUT", headers: { "Content-Type": file.type, "x-upsert": "false" }, body: file });
-    if (!uploaded.ok) throw new Error(`L'envoi de ${metadata.original_name} a échoué.`);
-    await request("/api/staff/uploads/finalize", { method: "POST", body: JSON.stringify({ ...metadata, object_path: signed.object_path }) });
-  }
-}
-
 document.querySelector("[data-publication-form]").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -385,18 +376,32 @@ document.querySelector("[data-publication-form]").addEventListener("submit", asy
   if (!form.reportValidity()) return;
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
+  let publicationSaved = false;
   try {
     const saved = await request(id ? `/api/staff/publications/${encodeURIComponent(id)}` : "/api/staff/publications", { method: id ? "PATCH" : "POST", body: JSON.stringify(data) });
     const publicationId = id || saved.item?.id;
     if (!publicationId) throw new Error("La publication a été enregistrée sans identifiant retourné.");
+    publicationSaved = true;
+    editingPublicationId = publicationId;
+    form.elements.id.value = publicationId;
     if (files.length) {
       feedback("[data-publication-feedback]", `Envoi de ${files.length} fichier(s)…`);
-      await uploadPublicationFiles(publicationId, files);
+      await uploadPublicationFiles(publicationId, files, {
+        request,
+        completedFiles: completedUploadFiles,
+        onFileComplete: () => renderAttachmentList(files)
+      });
     }
     feedback("[data-publication-feedback]", id ? "Publication mise à jour." : "Publication enregistrée.");
     resetEditor();
     await loadPublicationsForStaff();
-  } catch (error) { feedback("[data-publication-feedback]", error.message, true); }
+  } catch (error) {
+    if (files.length) renderAttachmentList(files);
+    const message = publicationSaved
+      ? `Le contenu est enregistré. ${error.message} Corrigez le problème puis réessayez : les fichiers déjà envoyés seront ignorés.`
+      : error.message;
+    feedback("[data-publication-feedback]", message, true);
+  }
   finally { submit.disabled = false; }
 });
 
@@ -423,7 +428,8 @@ function renderAttachmentList(pendingFiles = []) {
     list.append(row);
   }
   for (const file of pendingFiles) {
-    addText(list, "p", "staff-file-current staff-file-pending", `${safeUploadName(file.name)} · ${(file.size / (1024 * 1024)).toFixed(1)} Mo · À ajouter`);
+    const state = completedUploadFiles.has(file) ? "Envoyé" : "À ajouter";
+    addText(list, "p", "staff-file-current staff-file-pending", `${safeUploadName(file.name)} · ${(file.size / (1024 * 1024)).toFixed(1)} Mo · ${state}`);
   }
 }
 

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { handleSupabaseRoute, isSupabaseConfigured } from "../supabase.js";
 import { FixedWindowRateLimiter } from "../rate-limit.js";
+import { uploadPublicationFiles } from "../../cpo_frontend/publication-upload.js";
 
 class ResponseRecorder {
   headers = {};
@@ -24,6 +25,68 @@ test("fixed-window rate limiter blocks excess attempts and resets after expiry",
   assert.equal(limiter.consume("user-c", { limit: 1, windowMs: 5000 }).allowed, false);
   now += 5001;
   assert.equal(limiter.consume("user-c", { limit: 1, windowMs: 5000 }).allowed, true);
+});
+
+test("publication upload retry skips finalized files and resumes against the same publication", async () => {
+  const files = [
+    { name: "cours.pdf", type: "application/pdf", size: 1024 },
+    { name: "exercice.pdf", type: "application/pdf", size: 2048 }
+  ];
+  const completedFiles = new WeakSet();
+  const signCounts = new Map();
+  const uploadCounts = new Map();
+  const finalizeCounts = new Map();
+  const completedNames = [];
+  let failSecondUpload = true;
+  const request = async (path, options) => {
+    const body = JSON.parse(options.body);
+    if (path === "/api/staff/uploads/sign") {
+      signCounts.set(body.original_name, (signCounts.get(body.original_name) || 0) + 1);
+      return { upload_url: `https://storage.example/${body.original_name}`, object_path: `publication/${body.original_name}` };
+    }
+    if (path === "/api/staff/uploads/finalize") {
+      finalizeCounts.set(body.original_name, (finalizeCounts.get(body.original_name) || 0) + 1);
+      return { ok: true };
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  };
+  const fetchImpl = async (url, options) => {
+    const name = options.body.name;
+    uploadCounts.set(name, (uploadCounts.get(name) || 0) + 1);
+    if (name === "exercice.pdf" && failSecondUpload) {
+      failSecondUpload = false;
+      return { ok: false };
+    }
+    return { ok: true };
+  };
+
+  await assert.rejects(uploadPublicationFiles("publication-1", files, {
+    request, fetchImpl, completedFiles, onFileComplete: (file) => completedNames.push(file.name)
+  }), /exercice\.pdf/);
+  assert.deepEqual(completedNames, ["cours.pdf"]);
+  assert.equal(finalizeCounts.get("cours.pdf"), 1);
+  await uploadPublicationFiles("publication-1", files, {
+    request, fetchImpl, completedFiles, onFileComplete: (file) => completedNames.push(file.name)
+  });
+
+  assert.equal(signCounts.get("cours.pdf"), 1);
+  assert.equal(uploadCounts.get("cours.pdf"), 1);
+  assert.equal(finalizeCounts.get("cours.pdf"), 1);
+  assert.equal(signCounts.get("exercice.pdf"), 2);
+  assert.equal(uploadCounts.get("exercice.pdf"), 2);
+  assert.equal(finalizeCounts.get("exercice.pdf"), 1);
+  assert.deepEqual(completedNames, ["cours.pdf", "exercice.pdf"]);
+});
+
+test("publication upload retry validates unsupported files before requesting a signed URL", async () => {
+  let requests = 0;
+  await assert.rejects(uploadPublicationFiles("publication-1", [
+    { name: "script.exe", type: "application/x-msdownload", size: 12 }
+  ], {
+    request: async () => { requests += 1; return {}; },
+    fetchImpl: async () => ({ ok: true })
+  }), /Format ou taille non autorisé/);
+  assert.equal(requests, 0);
 });
 
 async function call(path, { method = "GET", headers = {}, body = "" } = {}) {
