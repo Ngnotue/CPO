@@ -337,6 +337,7 @@ test("staff publication list filters drafts and expired items on the server", as
     const headers = { cookie: "cpo_access=test-access" };
     const drafts = await call("/api/staff/publications?state=drafts&offset=0", { headers });
     const expired = await call("/api/staff/publications?state=expired&offset=50.9", { headers });
+    const archived = await call("/api/staff/publications?state=archived", { headers });
     const bounded = await call("/api/staff/publications?state=all&offset=999999", { headers });
     const invalid = await call("/api/staff/publications?state=unknown", { headers });
 
@@ -352,8 +353,55 @@ test("staff publication list filters drafts and expired items on the server", as
     assert.equal(listQueries[1].params.get("status"), "eq.published");
     assert.match(listQueries[1].params.get("and"), /^\(expires_at\.not\.is\.null,expires_at\.lte\./);
     assert.equal(listQueries[1].params.get("offset"), "50");
-    assert.equal(listQueries[2].params.get("offset"), "10000");
+    assert.equal(archived.response.status, 200);
+    assert.equal(listQueries[2].params.get("status"), "eq.archived");
+    assert.equal(listQueries[3].params.get("offset"), "10000");
     assert.equal(invalid.response.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
+test("restoring an archived publication as a draft keeps its attachments private", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const publicationId = "33333333-3333-4333-8333-333333333333";
+  const requests = [];
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(input);
+    requests.push({ url, options });
+    if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "teacher@example.org" }), { status: 200 });
+    if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "teacher", full_name: "Teacher", is_active: true, must_change_password: false }]), { status: 200 });
+    if (url.pathname === "/rest/v1/publications" && options.method === "PATCH") {
+      assert.deepEqual(JSON.parse(options.body), { status: "draft" });
+      return new Response(JSON.stringify([{ id: publicationId, status: "draft", visibility: "public", locale: "fr", kind: "course" }]), { status: 200 });
+    }
+    if (url.pathname === "/rest/v1/publication_files" && options.method === "PATCH") return new Response(null, { status: 204 });
+    if (url.pathname === "/rest/v1/audit_log" && options.method === "POST") return new Response(null, { status: 201 });
+    throw new Error(`Unexpected mocked request: ${options.method || "GET"} ${url.pathname}`);
+  };
+  try {
+    const { response } = await call(`/api/staff/publications/${publicationId}`, {
+      method: "PATCH",
+      headers: { origin: "http://localhost:8000", cookie: "cpo_access=test-access" },
+      body: JSON.stringify({ status: "draft" })
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.json().item.status, "draft");
+    const filesSync = requests.find(({ url, options }) => url.pathname === "/rest/v1/publication_files" && options.method === "PATCH");
+    assert.deepEqual(JSON.parse(filesSync.options.body), { is_public: false });
+    assert.equal(filesSync.options.headers.Authorization, "Bearer test-access");
   } finally {
     globalThis.fetch = originalFetch;
     for (const [key, value] of Object.entries(oldEnv)) {

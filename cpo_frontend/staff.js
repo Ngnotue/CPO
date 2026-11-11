@@ -137,6 +137,11 @@ async function loadPublicationsForStaff({ append = false } = {}) {
       const edit = addText(actions, "button", "staff-secondary", "Modifier");
       edit.type = "button";
       edit.addEventListener("click", () => editPublication(item));
+      if (item.status === "archived") {
+        const restore = addText(actions, "button", "staff-secondary", "Restaurer comme brouillon");
+        restore.type = "button";
+        restore.addEventListener("click", () => restorePublicationAsDraft(item.id));
+      }
       if (isExpired) {
         const renew = addText(actions, "button", "staff-secondary", "Renouveler");
         renew.type = "button";
@@ -229,6 +234,17 @@ async function archivePublication(id) {
   if (!window.confirm("Archiver ce contenu ? Il ne sera plus visible sur le site public.")) return;
   try {
     await request(`/api/staff/publications/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await loadPublicationsForStaff();
+  } catch (error) {
+    feedback("[data-publication-feedback]", error.message, true);
+  }
+}
+
+async function restorePublicationAsDraft(id) {
+  if (!window.confirm("Restaurer ce contenu comme brouillon ? Il restera privé jusqu’à sa republication.")) return;
+  try {
+    await request(`/api/staff/publications/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status: "draft" }) });
+    feedback("[data-publication-feedback]", "Contenu restauré comme brouillon. Il restera masqué du site public.");
     await loadPublicationsForStaff();
   } catch (error) {
     feedback("[data-publication-feedback]", error.message, true);

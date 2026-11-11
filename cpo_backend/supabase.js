@@ -459,13 +459,14 @@ export async function handleSupabaseRoute(request, response, url) {
       const identity = await authenticatedStaff(request, response);
       if (!identity) return true;
       const state = searchParams.get("state") || "all";
-      if (!["all", "drafts", "expired"].includes(state)) {
+      if (!["all", "drafts", "expired", "archived"].includes(state)) {
         throw Object.assign(new Error("Filtre de publication invalide."), { status: 400 });
       }
       const requestedOffset = Number(searchParams.get("offset"));
       const offset = Number.isFinite(requestedOffset) ? Math.max(0, Math.min(Math.trunc(requestedOffset), 10_000)) : 0;
       const query = new URLSearchParams({ select: "id,author_id,kind,status,visibility,locale,title,slug,summary,body,category,class_id,subject_id,is_important,published_at,expires_at,created_at,updated_at,publication_files(id,original_name,content_type,object_path,bucket_id,is_public)", order: "updated_at.desc,id.desc", limit: "51", offset: String(offset) });
       if (state === "drafts") query.set("status", "eq.draft");
+      if (state === "archived") query.set("status", "eq.archived");
       if (state === "expired") {
         query.set("status", "eq.published");
         query.set("and", `(expires_at.not.is.null,expires_at.lte.${new Date().toISOString()})`);
