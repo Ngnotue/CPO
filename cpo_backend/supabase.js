@@ -462,13 +462,17 @@ export async function handleSupabaseRoute(request, response, url) {
       if (!["all", "drafts", "expired"].includes(state)) {
         throw Object.assign(new Error("Filtre de publication invalide."), { status: 400 });
       }
-      const query = new URLSearchParams({ select: "id,author_id,kind,status,visibility,locale,title,slug,summary,body,category,class_id,subject_id,is_important,published_at,expires_at,created_at,updated_at,publication_files(id,original_name,content_type,object_path,bucket_id,is_public)", order: "updated_at.desc", limit: "100" });
+      const requestedOffset = Number(searchParams.get("offset"));
+      const offset = Number.isFinite(requestedOffset) ? Math.max(0, Math.min(Math.trunc(requestedOffset), 10_000)) : 0;
+      const query = new URLSearchParams({ select: "id,author_id,kind,status,visibility,locale,title,slug,summary,body,category,class_id,subject_id,is_important,published_at,expires_at,created_at,updated_at,publication_files(id,original_name,content_type,object_path,bucket_id,is_public)", order: "updated_at.desc,id.desc", limit: "51", offset: String(offset) });
       if (state === "drafts") query.set("status", "eq.draft");
       if (state === "expired") {
         query.set("status", "eq.published");
         query.set("and", `(expires_at.not.is.null,expires_at.lte.${new Date().toISOString()})`);
       }
-      const items = await postgrest(`publications?${query.toString()}`, { accessToken: identity.accessToken });
+      const rows = await postgrest(`publications?${query.toString()}`, { accessToken: identity.accessToken });
+      const hasMore = (rows || []).length > 50;
+      const items = (rows || []).slice(0, 50);
       for (const item of items || []) {
         const files = item.publication_files || [];
         item.files = await Promise.all(files.map(async (file) => ({
@@ -480,7 +484,7 @@ export async function handleSupabaseRoute(request, response, url) {
         })));
         delete item.publication_files;
       }
-      return sendJson(response, 200, { items }), true;
+      return sendJson(response, 200, { items, hasMore }), true;
     }
 
     if (pathname === "/api/staff/publications" && method === "POST") {

@@ -63,7 +63,7 @@ test("public publication feed sends ISO timestamps without double encoding", asy
   let requestUrl;
   process.env.SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
-  globalThis.fetch = async (input) => {
+  globalThis.fetch = async (input, options = {}) => {
     requestUrl = new URL(input);
     return new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } });
   };
@@ -323,27 +323,36 @@ test("staff publication list filters drafts and expired items on the server", as
   process.env.SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
   process.env.SUPABASE_SECRET_KEY = "secret-test-key";
-  globalThis.fetch = async (input) => {
+  globalThis.fetch = async (input, options = {}) => {
     const url = new URL(input);
     if (url.pathname === "/auth/v1/user") return new Response(JSON.stringify({ id: userId, email: "teacher@example.org" }), { status: 200 });
     if (url.pathname === "/rest/v1/profiles") return new Response(JSON.stringify([{ id: userId, role: "teacher", full_name: "Teacher", is_active: true, must_change_password: false }]), { status: 200 });
     if (url.pathname === "/rest/v1/publications") {
-      listQueries.push(url.searchParams);
-      return new Response(JSON.stringify([]), { status: 200 });
+      listQueries.push({ params: url.searchParams, authorization: options.headers?.Authorization });
+      return new Response(JSON.stringify(Array.from({ length: 51 }, (_, index) => ({ id: `publication-${index}`, publication_files: [] }))), { status: 200 });
     }
     throw new Error(`Unexpected mocked request: ${url.pathname}`);
   };
   try {
     const headers = { cookie: "cpo_access=test-access" };
-    const drafts = await call("/api/staff/publications?state=drafts", { headers });
-    const expired = await call("/api/staff/publications?state=expired", { headers });
+    const drafts = await call("/api/staff/publications?state=drafts&offset=0", { headers });
+    const expired = await call("/api/staff/publications?state=expired&offset=50.9", { headers });
+    const bounded = await call("/api/staff/publications?state=all&offset=999999", { headers });
     const invalid = await call("/api/staff/publications?state=unknown", { headers });
 
     assert.equal(drafts.response.status, 200);
-    assert.equal(listQueries[0].get("status"), "eq.draft");
+    assert.equal(drafts.response.json().items.length, 50);
+    assert.equal(drafts.response.json().hasMore, true);
+    assert.equal(listQueries[0].params.get("status"), "eq.draft");
+    assert.equal(listQueries[0].params.get("limit"), "51");
+    assert.equal(listQueries[0].params.get("offset"), "0");
+    assert.equal(listQueries[0].params.get("order"), "updated_at.desc,id.desc");
+    assert.equal(listQueries[0].authorization, "Bearer test-access");
     assert.equal(expired.response.status, 200);
-    assert.equal(listQueries[1].get("status"), "eq.published");
-    assert.match(listQueries[1].get("and"), /^\(expires_at\.not\.is\.null,expires_at\.lte\./);
+    assert.equal(listQueries[1].params.get("status"), "eq.published");
+    assert.match(listQueries[1].params.get("and"), /^\(expires_at\.not\.is\.null,expires_at\.lte\./);
+    assert.equal(listQueries[1].params.get("offset"), "50");
+    assert.equal(listQueries[2].params.get("offset"), "10000");
     assert.equal(invalid.response.status, 400);
   } finally {
     globalThis.fetch = originalFetch;

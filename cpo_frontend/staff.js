@@ -7,6 +7,9 @@ const staffNotice = document.querySelector("[data-staff-notice]");
 let currentProfile = null;
 let editingPublicationId = "";
 let editingFiles = [];
+let publicationOffset = 0;
+let publicationListVersion = 0;
+const STAFF_PUBLICATION_PAGE_SIZE = 50;
 
 async function request(path, options = {}) {
   const response = await fetch(path, {
@@ -93,13 +96,22 @@ async function refreshDashboard() {
   await Promise.all([loadTeachers(), loadPrivateResults(), loadAuditLog()]);
 }
 
-async function loadPublicationsForStaff() {
+async function loadPublicationsForStaff({ append = false } = {}) {
   const list = document.querySelector("[data-publication-list]");
-  list.replaceChildren();
+  const more = document.querySelector("[data-publication-more]");
+  const version = ++publicationListVersion;
+  if (!append) {
+    publicationOffset = 0;
+    list.replaceChildren();
+    more.hidden = true;
+  } else {
+    more.disabled = true;
+  }
   try {
     const state = document.querySelector("[data-publication-state]")?.value || "all";
-    const { items = [] } = await request(`/api/staff/publications?state=${encodeURIComponent(state)}`);
-    if (!items.length) {
+    const { items = [], hasMore = false } = await request(`/api/staff/publications?state=${encodeURIComponent(state)}&offset=${publicationOffset}`);
+    if (version !== publicationListVersion) return;
+    if (!items.length && !append) {
       addText(list, "p", "staff-list-empty", "Aucun contenu pour l'instant.");
       return;
     }
@@ -144,8 +156,18 @@ async function loadPublicationsForStaff() {
       row.append(copy, actions);
       list.append(row);
     }
+    publicationOffset += items.length;
+    more.hidden = !hasMore;
+    more.textContent = "Voir plus";
   } catch (error) {
-    addText(list, "p", "staff-list-empty is-error", error.message);
+    if (version !== publicationListVersion) return;
+    if (append) {
+      more.hidden = false;
+      more.textContent = "Réessayer";
+      feedback("[data-publication-feedback]", error.message, true);
+    } else addText(list, "p", "staff-list-empty is-error", error.message);
+  } finally {
+    if (version === publicationListVersion) more.disabled = false;
   }
 }
 
@@ -312,7 +334,8 @@ document.querySelector("[data-logout]").addEventListener("click", async () => {
   try { await request("/api/staff/logout", { method: "POST", body: "{}" }); } finally { window.location.reload(); }
 });
 document.querySelector("[data-reset-editor]").addEventListener("click", resetEditor);
-document.querySelector("[data-publication-state]").addEventListener("change", loadPublicationsForStaff);
+document.querySelector("[data-publication-state]").addEventListener("change", () => loadPublicationsForStaff());
+document.querySelector("[data-publication-more]").addEventListener("click", () => loadPublicationsForStaff({ append: true }));
 
 function safeUploadName(value) {
   return String(value || "fichier").split(/[\\/]/).pop().replace(/[\u0000-\u001f]/g, "").trim();

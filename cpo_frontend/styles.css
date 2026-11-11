@@ -198,6 +198,8 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .staff-file-pending { padding:7px 0; }
 .staff-list-actions { display:flex; flex-shrink:0; gap:8px; }
 .staff-list-empty { padding:18px 0; }
+.staff-publications-more { margin-top:18px; }
+.staff-publications-more[hidden] { display:none; }
 .staff-private-result strong,.staff-private-result span { font-size:13px; }
 .staff-private-result { align-items:flex-start; flex-direction:column; gap:2px; }
 .staff-audit-row { align-items:flex-start; }

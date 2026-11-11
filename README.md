@@ -172,7 +172,8 @@ nominatifs.
   passe temporaire, la gestion des publications et, pour l'administrateur, la
   création/suspension de comptes professeurs et l'enregistrement privé de
   résultats. L'équipe peut filtrer ses brouillons et retrouver les publications
-  expirées pour leur donner une nouvelle date ou retirer leur expiration.
+  expirées pour leur donner une nouvelle date ou retirer leur expiration; la
+  liste des contenus se charge par pages.
 - `cpo_frontend/resources.html` présente au public les cours, exercices et
   documents que le personnel a explicitement publiés avec une visibilité
   publique; les visiteurs peuvent rechercher par mot-clé, filtrer par type et
