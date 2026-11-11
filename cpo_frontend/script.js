@@ -53,6 +53,26 @@ Object.assign(translations.en, {
 });
 
 window.CPO_TRANSLATIONS = translations;
+const attachmentTypeLabels = {
+  "application/pdf": { fr: "PDF", en: "PDF" },
+  "application/msword": { fr: "Document Word", en: "Word document" },
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { fr: "Document Word", en: "Word document" },
+  "application/vnd.ms-excel": { fr: "Classeur Excel", en: "Excel workbook" },
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": { fr: "Classeur Excel", en: "Excel workbook" },
+  "image/jpeg": { fr: "Image JPEG", en: "JPEG image" },
+  "image/png": { fr: "Image PNG", en: "PNG image" }
+};
+window.CPO_ATTACHMENT_DETAILS = (file, language = currentLanguage) => {
+  const typeLabel = attachmentTypeLabels[file?.content_type]?.[language] || (language === "en" ? "File" : "Fichier");
+  const bytes = Number(file?.size_bytes);
+  if (!Number.isSafeInteger(bytes) || bytes < 1) return typeLabel;
+  const isMegabytes = bytes >= 1024 * 1024;
+  const value = bytes / (isMegabytes ? 1024 * 1024 : 1024);
+  const locale = language === "en" ? "en-GB" : "fr-FR";
+  const size = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value);
+  const unit = isMegabytes ? (language === "en" ? "MB" : "Mo") : (language === "en" ? "KB" : "Ko");
+  return `${typeLabel} · ${size} ${unit}`;
+};
 const requiredTranslationKeys = new Set(Object.keys(translations.fr));
 const missingEnglishTranslations = [...requiredTranslationKeys].filter((key) => !(key in translations.en));
 if (missingEnglishTranslations.length) console.warn("Missing English translations:", missingEnglishTranslations);
@@ -119,7 +139,11 @@ async function loadPublications(language = currentLanguage) {
         link.href = file.url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.textContent = `${file.name || "Document"} ↗`;
+        link.append(document.createTextNode(`${file.name || "Document"} ↗`));
+        const details = document.createElement("small");
+        details.className = "attachment-details";
+        details.textContent = window.CPO_ATTACHMENT_DETAILS(file, language);
+        link.append(details);
         article.append(link);
       }
       fragment.append(article);

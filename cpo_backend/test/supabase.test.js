@@ -106,6 +106,55 @@ test("public publication feed selects and returns the full publication body", as
   }
 });
 
+test("public attachments expose format and size with a signed URL but no storage metadata", async () => {
+  const oldEnv = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
+  };
+  const originalFetch = globalThis.fetch;
+  let publicationQuery;
+  const file = {
+    id: "22222222-2222-4222-8222-222222222222",
+    original_name: "fiche.pdf",
+    content_type: "application/pdf",
+    size_bytes: 1_572_864,
+    bucket_id: "cpo-private-documents",
+    object_path: "11111111-1111-4111-8111-111111111111/publication/fiche.pdf"
+  };
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
+  process.env.SUPABASE_SECRET_KEY = "secret-test-key";
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (url.pathname === "/rest/v1/publications") {
+      publicationQuery = url.searchParams;
+      return new Response(JSON.stringify([{ kind: "resource", title: "Fiche", publication_files: [file] }]), { status: 200 });
+    }
+    if (url.pathname.startsWith("/storage/v1/object/sign/")) {
+      return new Response(JSON.stringify({ signedURL: "/object/sign/cpo-private-documents/signed/fiche.pdf?token=test" }), { status: 200 });
+    }
+    throw new Error(`Unexpected mocked request: ${url.pathname}`);
+  };
+  try {
+    const { response } = await call("/api/publications?kind=resource&locale=fr");
+    assert.equal(response.status, 200);
+    assert.match(publicationQuery.get("select"), /publication_files\([^)]*size_bytes/);
+    const attachment = response.json().items[0].files[0];
+    assert.equal(attachment.name, file.original_name);
+    assert.equal(attachment.content_type, file.content_type);
+    assert.equal(attachment.size_bytes, file.size_bytes);
+    assert.equal(attachment.url, "https://example.supabase.co/storage/v1/object/sign/cpo-private-documents/signed/fiche.pdf?token=test");
+    assert.equal("bucket_id" in attachment, false);
+    assert.equal("object_path" in attachment, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});
+
 test("public publication feed supports published course and exercise resources with pagination", async () => {
   const oldUrl = process.env.SUPABASE_URL;
   const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;

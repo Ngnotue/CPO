@@ -64,7 +64,11 @@ function createCard(item, fallbackLanguage = false) {
     link.href = file.url;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = `${t("resources.download")}: ${file.name || "PDF"} ↗`;
+    link.append(document.createTextNode(`${t("resources.download")}: ${file.name || "PDF"} ↗`));
+    const details = document.createElement("small");
+    details.className = "attachment-details";
+    details.textContent = window.CPO_ATTACHMENT_DETAILS?.(file) || "";
+    link.append(details);
     card.append(link);
   }
   return card;

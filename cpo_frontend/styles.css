@@ -136,7 +136,8 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .resource-category { border:1px solid var(--line); color:var(--ink-soft); display:inline-block; font-size:10px; font-weight:700; letter-spacing:.08em; margin:0 0 14px; max-width:100%; overflow-wrap:anywhere; padding:5px 8px; text-transform:uppercase; }
 .resource-card h2 { font-family:Fraunces,serif; font-size:clamp(25px,3vw,36px); font-weight:500; line-height:1.08; margin:0 0 14px; overflow-wrap:anywhere; }
 .resource-summary,.resource-body { color:var(--ink-soft); font-size:14px; line-height:1.7; margin:0 0 12px; overflow-wrap:anywhere; white-space:pre-line; }
-.resource-download { font-size:11px; justify-self:start; margin:8px 10px 0 0; max-width:100%; overflow-wrap:anywhere; text-transform:none; }
+.resource-download { align-items:flex-start; flex-direction:column; font-size:11px; gap:4px; justify-self:start; margin:8px 10px 0 0; max-width:100%; overflow-wrap:anywhere; text-transform:none; }
+.attachment-details { color:var(--ink-soft); display:block; font-size:10px; font-weight:500; letter-spacing:0; line-height:1.4; text-transform:none; }
 .resources-empty,.resources-error,.resources-loading { color:var(--ink-soft); margin:28px auto; max-width:1200px; }
 .resources-empty h3,.resources-error h3 { color:var(--ink); font-family:Fraunces,serif; font-size:clamp(24px,3vw,34px); font-weight:500; }
 .resources-empty p,.resources-error p { line-height:1.65; max-width:60ch; }

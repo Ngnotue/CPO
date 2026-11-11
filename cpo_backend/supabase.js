@@ -365,7 +365,7 @@ export async function handleSupabaseRoute(request, response, url) {
         throw Object.assign(new Error("La recherche doit contenir au maximum 120 caractères."), { status: 400 });
       }
       const query = new URLSearchParams({
-        select: "id,kind,title,slug,summary,body,category,locale,is_important,published_at,expires_at,publication_files(id,original_name,content_type,object_path,bucket_id)",
+        select: "id,kind,title,slug,summary,body,category,locale,is_important,published_at,expires_at,publication_files(id,original_name,content_type,size_bytes,object_path,bucket_id)",
         status: "eq.published",
         visibility: "eq.public",
         locale: `eq.${locale}`,
@@ -388,6 +388,7 @@ export async function handleSupabaseRoute(request, response, url) {
         item.files = await Promise.all(files.map(async (file) => ({
           name: file.original_name,
           content_type: file.content_type,
+          size_bytes: file.size_bytes,
           url: await signedStorageUrl(file.bucket_id, file.object_path)
         })));
         delete item.publication_files;
