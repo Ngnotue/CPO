@@ -39,14 +39,14 @@ const translations = {
 
 Object.assign(translations.fr, {
   "resources.search.label": "Rechercher dans les ressources",
-  "resources.search.placeholder": "Titre ou mot-clé",
+  "resources.search.placeholder": "Titre, catégorie ou mot-clé",
   "resources.empty.filtered.title": "Aucune ressource ne correspond à ces critères.",
   "resources.empty.filtered.copy": "Modifiez la recherche ou le type de ressource, ou effacez les filtres.",
   "resources.empty.reset": "Effacer la recherche et les filtres"
 });
 Object.assign(translations.en, {
   "resources.search.label": "Search resources",
-  "resources.search.placeholder": "Title or keyword",
+  "resources.search.placeholder": "Title, category or keyword",
   "resources.empty.filtered.title": "No resources match these criteria.",
   "resources.empty.filtered.copy": "Change your search or resource type, or clear the filters.",
   "resources.empty.reset": "Clear search and filters"

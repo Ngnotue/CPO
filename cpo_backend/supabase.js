@@ -380,7 +380,7 @@ export async function handleSupabaseRoute(request, response, url) {
         const escaped = search.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replace(/[%_*]/g, "\\$&");
         const pattern = `"*${escaped}*"`;
         query.delete("or");
-        query.set("and", `(or(title.ilike.${pattern},summary.ilike.${pattern},body.ilike.${pattern}),or(expires_at.is.null,expires_at.gt.${now}))`);
+        query.set("and", `(or(title.ilike.${pattern},summary.ilike.${pattern},body.ilike.${pattern},category.ilike.${pattern}),or(expires_at.is.null,expires_at.gt.${now}))`);
       }
       const items = await postgrest(`publications?${query.toString()}`);
       for (const item of items || []) {

@@ -177,7 +177,7 @@ nominatifs.
 - `cpo_frontend/resources.html` présente au public les cours, exercices et
   documents que le personnel a explicitement publiés avec une visibilité
   publique; les visiteurs peuvent rechercher par mot-clé, filtrer par type,
-  repérer la catégorie éditoriale et consulter le format et la taille des
+  rechercher aussi par catégorie éditoriale, et consulter le format et la taille des
   pièces jointes avant de les ouvrir.
 - Le navigateur ne reçoit jamais la clé Supabase secrète. Les actions passent
   par le backend Node et les accès SQL sont protégés par Row Level Security

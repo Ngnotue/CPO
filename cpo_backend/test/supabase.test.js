@@ -201,6 +201,7 @@ test("public publication search safely matches text and preserves expiry filteri
     assert.ok(filters.includes('math, (chapitre)\\_\\%\\* \\"A\\"'));
     assert.match(filters, /summary\.ilike\./);
     assert.match(filters, /body\.ilike\./);
+    assert.match(filters, /category\.ilike\./);
     assert.match(filters, /or\(expires_at\.is\.null,expires_at\.gt\./);
     assert.equal(requestUrl.searchParams.has("or"), false);
     assert.equal(requestUrl.searchParams.get("kind"), "in.(course)");
