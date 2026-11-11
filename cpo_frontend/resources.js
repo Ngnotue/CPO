@@ -125,14 +125,14 @@ async function loadResources({ append = false } = {}) {
     list.append(fragment);
     offset = append ? offset + items.length : items.length;
     empty.hidden = list.childElementCount > 0;
-    if (!list.childElementCount && (filter.value !== "all" || searchInput.value.trim())) {
+    const hasActiveFilters = filter.value !== "all" || Boolean(searchInput.value.trim());
+    clearFilter.hidden = !hasActiveFilters;
+    if (!list.childElementCount && hasActiveFilters) {
       empty.querySelector("h3").textContent = t("resources.empty.filtered.title");
       empty.querySelector("p").textContent = t("resources.empty.filtered.copy");
-      clearFilter.hidden = false;
     } else {
       empty.querySelector("h3").textContent = t("resources.empty.title");
       empty.querySelector("p").textContent = t("resources.empty.copy");
-      clearFilter.hidden = true;
     }
     more.hidden = items.length < PAGE_SIZE || offset >= MAX_OFFSET;
   } catch {
