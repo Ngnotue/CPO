@@ -38,7 +38,14 @@ function createCard(item, fallbackLanguage = false) {
   meta.textContent = `${t(`resources.kind.${item.kind}`)}${item.published_at ? ` · ${formatDate(item.published_at)}` : ""}${fallbackLanguage ? ` · ${t("resources.fallbackLabel")}` : ""}`;
   const title = document.createElement("h2");
   title.textContent = item.title || "";
-  card.append(meta, title);
+  card.append(meta);
+  if (item.is_important === true) {
+    const importance = document.createElement("span");
+    importance.className = "content-importance";
+    importance.textContent = t("resources.important");
+    card.append(importance);
+  }
+  card.append(title);
   if (typeof item.category === "string" && item.category.trim()) {
     const category = document.createElement("span");
     category.className = "resource-category";

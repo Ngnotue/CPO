@@ -38,7 +38,9 @@ const translations = {
 };
 
 Object.assign(translations.fr, {
+  "news.important": "À la une",
   "news.more": "Voir les actualités précédentes",
+  "resources.important": "À la une",
   "news.loadingMore": "Chargement…",
   "news.retryMore": "Réessayer",
   "resources.search.label": "Rechercher dans les ressources",
@@ -48,7 +50,9 @@ Object.assign(translations.fr, {
   "resources.empty.reset": "Effacer la recherche et les filtres"
 });
 Object.assign(translations.en, {
+  "news.important": "Featured",
   "news.more": "Load earlier news",
+  "resources.important": "Featured",
   "news.loadingMore": "Loading…",
   "news.retryMore": "Try again",
   "resources.search.label": "Search resources",
@@ -117,7 +121,14 @@ function renderNewsEntry(item, language) {
   title.textContent = item.title || "";
   const summary = document.createElement("p");
   summary.textContent = item.summary || "";
-  article.append(meta, title, summary);
+  article.append(meta);
+  if (item.is_important === true) {
+    const importance = document.createElement("span");
+    importance.className = "content-importance";
+    importance.textContent = translations[language]["news.important"];
+    article.append(importance);
+  }
+  article.append(title, summary);
   if (item.body?.trim()) {
     const body = document.createElement("p");
     body.className = "news-entry-body";

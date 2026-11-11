@@ -120,6 +120,7 @@ h1,h2,h3,p { margin-top:0; } h1,h2 { font-family:Fraunces,serif; font-weight:500
 .news-feed:empty { display:none; }
 .news-entry { border-top:2px solid var(--ink); padding:22px 0 30px; }
 .news-entry-meta { color:var(--ink-soft); font-size:10px; font-weight:700; letter-spacing:.12em; margin:0 0 14px; text-transform:uppercase; }
+.content-importance { background:var(--paper-strong); border:1px solid var(--line); color:var(--ink); display:inline-block; font-size:10px; font-weight:700; letter-spacing:.08em; margin:0 0 12px; max-width:100%; overflow-wrap:anywhere; padding:5px 8px; text-transform:uppercase; }
 .news-entry h3 { font-family:Fraunces,serif; font-size:clamp(23px,2.4vw,31px); font-weight:500; line-height:1.08; margin:0 0 12px; }
 .news-entry>p:last-child { color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0; }
 .news-entry>p.news-entry-body { color:var(--ink-soft); font-size:14px; line-height:1.7; margin:14px 0 0; overflow-wrap:anywhere; white-space:pre-line; }

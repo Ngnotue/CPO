@@ -87,7 +87,7 @@ test("public publication feed selects and returns the full publication body", as
   const oldPublishable = process.env.SUPABASE_PUBLISHABLE_KEY;
   const originalFetch = globalThis.fetch;
   let requestUrl;
-  const item = { id: "3654d2da-1671-44c3-9913-3a89baa8fbde", kind: "news", title: "Rentrée", summary: "Résumé", body: "Le texte complet de la publication." };
+  const item = { id: "3654d2da-1671-44c3-9913-3a89baa8fbde", kind: "news", title: "Rentrée", summary: "Résumé", body: "Le texte complet de la publication.", is_important: true };
   process.env.SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-test-key";
   globalThis.fetch = async (input) => {
@@ -98,7 +98,9 @@ test("public publication feed selects and returns the full publication body", as
     const { response } = await call("/api/publications?locale=fr");
     assert.equal(response.status, 200);
     assert.match(requestUrl.searchParams.get("select"), /,body,/);
+    assert.match(requestUrl.searchParams.get("select"), /,is_important,/);
     assert.equal(response.json().items[0].body, item.body);
+    assert.equal(response.json().items[0].is_important, true);
   } finally {
     globalThis.fetch = originalFetch;
     if (oldUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = oldUrl;
