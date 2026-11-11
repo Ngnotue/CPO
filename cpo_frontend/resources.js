@@ -39,6 +39,12 @@ function createCard(item, fallbackLanguage = false) {
   const title = document.createElement("h2");
   title.textContent = item.title || "";
   card.append(meta, title);
+  if (typeof item.category === "string" && item.category.trim()) {
+    const category = document.createElement("span");
+    category.className = "resource-category";
+    category.textContent = item.category.trim();
+    card.append(category);
+  }
   if (item.summary?.trim()) {
     const summary = document.createElement("p");
     summary.className = "resource-summary";
