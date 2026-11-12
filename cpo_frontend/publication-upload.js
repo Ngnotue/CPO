@@ -21,12 +21,15 @@ export async function uploadPublicationFiles(publicationId, files, {
 } = {}) {
   if (typeof request !== "function") throw new TypeError("Une fonction request est requise.");
 
-  for (const file of files) {
-    if (completedFiles.has(file)) continue;
-    if (!ALLOWED_FILE_TYPES.has(file.type) || file.size < 1 || file.size > MAX_UPLOAD_BYTES) {
-      throw new Error(`Format ou taille non autorisé : ${safeUploadName(file.name)}`);
+  // Validate the entire pending batch before uploading any file.
+  const pendingFiles = Array.from(files).filter((file) => !completedFiles.has(file));
+  for (const file of pendingFiles) {
+    if (!file || !ALLOWED_FILE_TYPES.has(file.type) || !Number.isSafeInteger(file.size) || file.size < 1 || file.size > MAX_UPLOAD_BYTES) {
+      throw new Error(`Format ou taille non autorisé : ${safeUploadName(file?.name)}`);
     }
+  }
 
+  for (const file of pendingFiles) {
     const metadata = { publication_id: publicationId, original_name: safeUploadName(file.name), content_type: file.type, size_bytes: file.size };
     const signed = await request("/api/staff/uploads/sign", { method: "POST", body: JSON.stringify(metadata) });
     const uploaded = await fetchImpl(signed.upload_url, { method: "PUT", headers: { "Content-Type": file.type, "x-upsert": "false" }, body: file });
