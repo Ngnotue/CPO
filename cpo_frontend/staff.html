@@ -47,8 +47,9 @@
           <h2>Choisissez un mot de passe personnel</h2>
           <p>Votre mot de passe temporaire est à usage unique. Choisissez-en un nouveau d'au moins 12 caractères avant d'accéder au portail.</p>
           <form class="staff-form" data-password-form>
-            <label><span>Nouveau mot de passe</span><input type="password" name="password" minlength="12" autocomplete="new-password" required /></label>
-            <label><span>Confirmer le mot de passe</span><input type="password" name="confirmation" minlength="12" autocomplete="new-password" required /></label>
+            <label><span>Nouveau mot de passe</span><input id="staff-new-password" type="password" name="password" minlength="12" autocomplete="new-password" required /></label>
+            <label><span>Confirmer le mot de passe</span><input id="staff-confirm-password" type="password" name="confirmation" minlength="12" autocomplete="new-password" required /></label>
+            <button class="staff-secondary" type="button" data-password-visibility aria-controls="staff-new-password staff-confirm-password" hidden>Afficher les mots de passe</button>
             <button class="button button-dark" type="submit"><span>Mettre à jour</span><span aria-hidden="true">↗</span></button>
             <p class="form-feedback" role="status" data-password-feedback></p>
           </form>
@@ -129,6 +130,7 @@
         </div>
       </section>
     </main>
+    <script src="password-visibility.js" defer></script>
     <script type="module" src="staff.js"></script>
   </body>
 </html>
