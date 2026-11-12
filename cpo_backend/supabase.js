@@ -122,7 +122,7 @@ async function supabaseRequest(path, { method = "GET", body, accessToken, admin 
   if (!result.ok) {
     const error = new Error(data?.msg || data?.message || data?.error_description || "Supabase request failed");
     error.status = result.status;
-    error.code = data?.code || data?.error || "SUPABASE_ERROR";
+    error.code = data?.code || data?.error_code || data?.error || "SUPABASE_ERROR";
     throw error;
   }
   return data;
@@ -451,8 +451,25 @@ export async function handleSupabaseRoute(request, response, url) {
       if (!identity) return true;
       const { password } = await readJson(request, 8 * 1024);
       if (typeof password !== "string" || password.length < 12 || password.length > 128) throw Object.assign(new Error("Le nouveau mot de passe doit contenir au moins 12 caractères."), { status: 400 });
-      await authRequest("user", { method: "PUT", accessToken: identity.accessToken, body: { password } });
-      await postgrest(`profiles?id=eq.${encodeURIComponent(identity.user.id)}`, { method: "PATCH", admin: true, body: { must_change_password: false }, prefer: "return=minimal" });
+      try {
+        await authRequest("user", { method: "PUT", accessToken: identity.accessToken, body: { password } });
+      } catch (error) {
+        if (error.code === "same_password") {
+          return sendJson(response, 400, { error: "Choisissez un mot de passe différent du mot de passe actuel." }), true;
+        }
+        if (error.code === "weak_password" || error.status === 422) {
+          return sendJson(response, 400, { error: "Ce mot de passe a été refusé. Choisissez un mot de passe plus sûr et différent du précédent." }), true;
+        }
+        console.error("CPO password update failed:", error.code || error.status || "UNKNOWN");
+        return sendJson(response, error.status === 401 ? 401 : 502, { error: "Le changement de mot de passe n’a pas pu être confirmé. Si vous avez été déconnecté, reconnectez-vous et réessayez." }), true;
+      }
+      try {
+        const profiles = await postgrest(`profiles?id=eq.${encodeURIComponent(identity.user.id)}&select=id,must_change_password`, { method: "PATCH", admin: true, body: { must_change_password: false }, prefer: "return=representation" });
+        if (!Array.isArray(profiles) || profiles.length !== 1 || profiles[0].must_change_password !== false) throw new Error("PROFILE_UPDATE_NOT_CONFIRMED");
+      } catch (error) {
+        console.error("CPO password profile update failed:", error.code || error.status || "UNKNOWN");
+        return sendJson(response, 503, { error: "Le mot de passe a été modifié, mais la fin de la configuration a échoué. Contactez l’administrateur avant de réessayer." }), true;
+      }
       return sendJson(response, 200, { ok: true }), true;
     }
 
